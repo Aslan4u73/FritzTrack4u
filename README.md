@@ -9,21 +9,7 @@
 
 <div align="center">
 
-```
-        FritzTrack4U  ·  Indoor-Ortung mit der Hardware, die du schon hast
-  ┌───────────────────────────────────────────────────────────────────────────┐
-  │   ╔═════════╗   2.OG · Buero          (•)Box D        [ • Murat ]           │
-  │   ║ ▓▓▓▓▓▓▓ ║───────────────────────────────────────────────────           │
-  │   ║ ▓▓▓▓▓▓▓ ║   1.OG · SARA           (•)Box C        [ • Sevda ]           │
-  │   ║ ▓▓▓▓▓▓▓ ║───────────────────────────────────────────────────           │
-  │   ║ ▓▓▓▓▓▓▓ ║   EG  · Kaminraum       (•)Box B        [ • Furkan]           │
-  │   ║ ▓▓▓▓▓▓▓ ║───────────────────────────────────────────────────           │
-  │   ║ ▓▓▓▓▓▓▓ ║   KG  · Keller          (•)Box A  ◀MASTER                     │
-  │   ╚═════════╝                                                               │
-  │                  ((  ·  ))  ein Handy  →  vier gleichzeitige Messungen      │
-  │              {A:80%  B:40%  C:15%  D:5%}  →  Raum: Kaminraum                │
-  └───────────────────────────────────────────────────────────────────────────┘
-```
+<img src="docs/images/banner.svg" alt="FritzTrack4U — Indoor-Ortung mit der Hardware, die du schon hast" width="100%">
 
 # 📡 FritzTrack4U
 
@@ -44,6 +30,11 @@
 > ⚖️ **Trademark / Marken-Hinweis**
 > **DE —** FRITZ! und FRITZ!Box sind eingetragene Marken der FRITZ! GmbH (vormals AVM GmbH). Dieses Projekt ist ein unabhaengiges, von der Community entwickeltes Werkzeug und steht in keiner Verbindung zu FRITZ!/AVM. Produktnamen werden ausschliesslich zu Identifikationszwecken genannt, um die Kompatibilitaet zu beschreiben.
 > **EN —** FRITZ! and FRITZ!Box are registered trademarks of FRITZ! GmbH (formerly AVM GmbH). This project is an independent, community-developed tool, neither affiliated with, authorized, sponsored nor endorsed by FRITZ!/AVM. Product names are used for identification purposes only to describe compatibility.
+
+> ⚠️ **Haftungsausschluss / Disclaimer / Sorumluluk Reddi — bitte lesen / please read / lutfen oku**
+> **DE —** FritzTrack4U ist ein **Eigen-Lern- und Bastel-System** zum selber Aufbauen, Lernen und Experimentieren. Die Nutzung erfolgt **vollstaendig auf eigene Gefahr**. Jeder ist fuer sein eigenes System, seine FritzBoxen, seine Daten und seine Automationen **selbst verantwortlich**. Es wird **keine Haftung** uebernommen — fuer keinerlei Schaeden, Datenverluste, Fehlfunktionen, Folgeschaeden oder sonstige Nachteile, die direkt oder indirekt aus der Nutzung entstehen. Keine Gewaehr fuer Richtigkeit, Genauigkeit oder Eignung fuer einen bestimmten Zweck.
+> **EN —** FritzTrack4U is a **self-learning, DIY hobby system** for building, learning and experimenting yourself. Use is **entirely at your own risk**. Everyone is **solely responsible** for their own system, FritzBoxes, data and automations. **No liability** is accepted for any damage, data loss, malfunction, consequential harm or other disadvantage arising directly or indirectly from its use. No warranty of correctness, accuracy or fitness for a particular purpose.
+> **TR —** FritzTrack4U, kendin kurup ogrenmen ve denemen icin bir **kendin-yap / kendi-ogrenme sistemidir**. Kullanim **tamamen kendi sorumlulugundadir**. Herkes kendi sistemi, FritzBox'lari, verileri ve otomasyonlarindan **kendisi sorumludur**. Kullanimdan dogabilecek hicbir zarar, veri kaybi, ariza veya dolayli zarardan **sorumluluk kabul edilmez**. Dogruluk veya belirli bir amaca uygunluk icin garanti verilmez.
 
 <div align="center">
 
@@ -87,23 +78,46 @@ flowchart LR
 
 So wird aus einer einzelnen Box ein grober Etagen-Sensor — und aus mehreren Boxen ein raumgenaues Ortungssystem:
 
+```mermaid
+flowchart TD
+    Phone["📱 Handy im Raum"]
+
+    Phone -.->|"80%"| B1["📡 FritzBox 1"]
+    Phone -.->|"40%"| B2["📡 FritzBox 2"]
+    Phone -.->|"15%"| B3["📡 FritzBox 3"]
+    Phone -.->|"5%"| B4["📡 FritzBox 4"]
+
+    B1 --> V["🧮 Signal-Vektor<br/>[80, 40, 15, 5]"]
+    B2 --> V
+    B3 --> V
+    B4 --> V
+
+    V ==>|"Vergleich gegen kalibrierte Fingerprints<br/>mittlere Abweichung ueber ALLE 4 Boxen"| Match{"🔍 Bester Treffer?"}
+
+    Match --> Pos["📍 Raum: Buero"]
+
+    subgraph Kalibriert ["Gespeicherte Raum-Fingerprints"]
+        FP1["Buero: [78, 42, 14, 6]"]
+        FP2["Kueche: [20, 75, 30, 10]"]
+        FP3["Schlafzimmer: [10, 25, 70, 40]"]
+    end
+
+    Kalibriert -.-> Match
+
+    classDef phone fill:#a855f7,stroke:#7c3aed,color:#fff,stroke-width:2px
+    classDef box fill:#1e293b,stroke:#475569,color:#e2e8f0
+    classDef vector fill:#7c3aed,stroke:#a855f7,color:#fff,stroke-width:2px
+    classDef result fill:#16a34a,stroke:#15803d,color:#fff,stroke-width:2px
+    classDef fp fill:#0f172a,stroke:#334155,color:#94a3b8
+
+    class Phone phone
+    class B1,B2,B3,B4 box
+    class V vector
+    class Pos result
+    class FP1,FP2,FP3 fp
 ```
-   ┌─────────────────────────────────────────────────────────────────┐
-   │                                                                   │
-   │   📱  EIN Raum (z.B. Buero)                                        │
-   │       │                                                           │
-   │       ├──── 📡 Box 1  ▓▓▓▓▓▓▓▓░░  80%   ← stark, gleicher Raum    │
-   │       ├──── 📡 Box 2  ▓▓▓▓░░░░░░  40%   ← Nachbarraum             │
-   │       ├──── 📡 Box 3  ▓▓░░░░░░░░  15%   ← durch eine Wand         │
-   │       └──── 📡 Box 4  ▓░░░░░░░░░   5%   ← andere Etage            │
-   │                          │                                        │
-   │                          ▼                                        │
-   │              Vektor {80, 40, 15, 5}  ──►  RAUM: Buero ✅          │
-   │                                                                   │
-   │   Staerkste Box = ETAGE        Voller Vektor = RAUM               │
-   │   Keine Box sieht das Handy   = ABWESEND                          │
-   └─────────────────────────────────────────────────────────────────┘
-```
+
+> **Kernaussage:** Nicht die **staerkste** Box entscheidet, sondern der **volle Vektor aller Boxen** gegen die kalibrierten Raum-Fingerprints. Staerkste Box = **Etage**, voller Vektor = **Raum**, keine Box = **abwesend**.
 
 ### ✨ Features
 
@@ -169,6 +183,47 @@ Ehrlich bleiben: ESP32 ist der genauere Profi-Standard. FritzTrack4U gewinnt, we
 - 👋 Gaeste-Hinweis: ein unbekanntes Handy taucht im WLAN auf.
 
 > **Bewusst NICHT das Ziel:** Mitarbeiter-Ueberwachung am Arbeitsplatz oder Kunden-Tracking im Laden. Das waere in Deutschland datenschutzrechtlich heikel (DSGVO, Betriebsrat) — FritzTrack4U ist ein **Werkzeug fuers eigene Zuhause**, mit deiner eigenen Familie und deiner eigenen Einwilligung.
+
+### 🔧 Architektur — wie die Daten fliessen
+
+```mermaid
+flowchart LR
+    subgraph Boxes ["FritzBoxen"]
+        F1["📡 FritzBox 1"]
+        F2["📡 FritzBox 2"]
+        F3["📡 FritzBox 3"]
+        F4["📡 FritzBox 4"]
+    end
+
+    F1 -->|"TR-064 / Port 49000"| D
+    F2 -->|"TR-064 / Port 49000"| D
+    F3 -->|"TR-064 / Port 49000"| D
+    F4 -->|"TR-064 / Port 49000"| D
+
+    D["🐍 Python-Daemon<br/>sammelt Signal-Vektoren"]
+
+    D -->|"speichert"| DB[("💾 SQLite-Verlauf<br/>60 Tage")]
+    D -->|"publiziert"| MQTT["📨 MQTT-Broker"]
+
+    MQTT --> HA["🏠 Home Assistant"]
+
+    HA --> S1["👤 Person A: Buero"]
+    HA --> S2["👤 Person B: Kueche"]
+
+    classDef box fill:#1e293b,stroke:#475569,color:#e2e8f0
+    classDef daemon fill:#7c3aed,stroke:#a855f7,color:#fff,stroke-width:2px
+    classDef store fill:#0ea5e9,stroke:#0284c7,color:#fff
+    classDef bus fill:#f59e0b,stroke:#d97706,color:#1e293b
+    classDef ha fill:#16a34a,stroke:#15803d,color:#fff,stroke-width:2px
+    classDef person fill:#0f172a,stroke:#334155,color:#cbd5e1
+
+    class F1,F2,F3,F4 box
+    class D daemon
+    class DB store
+    class MQTT bus
+    class HA ha
+    class S1,S2 person
+```
 
 ### 🚀 Schnellstart
 
@@ -611,7 +666,19 @@ Bu README yolculugu durustce belgeler, cikmaz sokaklar dahil. Dahiyane bir numar
 <a name="-lizenz--license--lisans"></a>
 ## 📄 Lizenz / License / Lisans
 
-**MIT** — frei nutzbar, frei aenderbar, ohne Gewaehr. / Free to use and modify, no warranty. / Ozgurce kullan ve degistir, garanti yok.
+**MIT** — frei nutzbar, frei aenderbar, **ohne jede Gewaehr und ohne Haftung** (siehe Haftungsausschluss oben). / Free to use and modify, **no warranty, no liability**. / Ozgurce kullan ve degistir, **garanti ve sorumluluk yok**.
+
+---
+
+## 🙋 Ueber das Projekt / About
+
+Gebaut von **Murat Danis** ([aslan4u.de](https://aslan4u.de)) — AI-Engineer & E-Commerce-Entwickler.
+
+Ehrlich gesagt: Die **Idee** und das **Durchhalten (nicht aufgeben)** kamen von mir — gebaut habe ich es aber **gemeinsam mit meiner KI-Assistentin LISA**. Allein haette ich das so nicht geschafft. Das ist Mensch + KI als Team, und ich finde, das darf man auch so sagen. 🖤
+
+*Honestly: the **idea** and the **persistence** are mine — but I built this **together with my AI assistant LISA**. I couldn't have done it alone. Human + AI as a team, and I'm happy to say so.*
+
+👉 **Weitere Projekte / More projects:** [aslan4u.de](https://aslan4u.de)
 
 ---
 
@@ -628,3 +695,15 @@ Bu README yolculugu durustce belgeler, cikmaz sokaklar dahil. Dahiyane bir numar
 **⭐ Wenn dich das hier ueberzeugt hat — gib einen Stern. / If this convinced you — drop a star. / Ikna olduysan — bir yildiz birak.**
 
 </div>
+
+---
+
+<details>
+<summary>🔎 Keywords / Schlagwoerter / Anahtar kelimeler</summary>
+
+#IndoorGPS · #IndoorPositioning · #IndoorPersonTracking · #IndoorLocalization · #WiFiPositioning · #WiFiSensing · #WiFiTracking · #WiFiFingerprinting · #RSSI · #PresenceDetection · #RoomPresence · #OccupancySensing · #DeviceFree · #Trilateration · #HomeAssistant · #SmartHome · #SmartHomeDE · #Hausautomatisierung · #HomeAutomation · #IoT · #FritzBox · #AVM · #TR064 · #NoESP32 · #ESPresenseAlternative · #PrivacyFirst · #OpenSource
+
+FritzBox Anwesenheitserkennung · Home Assistant Anwesenheitserkennung · Raumerkennung Home Assistant · Praesenzerkennung Smart Home · WLAN Personen erkennen · Anwesenheitserkennung ohne ESP32 · wer ist zuhause Smart Home · Etage erkennen Smart Home · Gaeste erkennen WLAN · indoor ortung WLAN open source · raumgenaue Ortung per WLAN · router-based presence detection · WiFi RSSI room-level presence · device-free indoor localization · multi-floor indoor positioning · self-hosted indoor positioning · ESPresense alternative without ESP32 · FRITZ!Box Home Assistant device tracker
+
+</details>
+

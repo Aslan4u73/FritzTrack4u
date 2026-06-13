@@ -34,3 +34,6 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Interne Strategie-/Kontakt-Entwuerfe (nicht oeffentlich)
+docs/AVM-Kontakt-Entwurf.md
