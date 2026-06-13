@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kann WLAN durch Wände sehen? Was wirklich geht — und was Hype ist | aslan4u.de</title>
+<meta name="description" content="Kann WLAN durch Wände sehen und Personen erkennen? Die ehrliche Antwort: kein Röntgenblick. Was Forscher mit Spezial-Hardware können ist nicht, was eine FritzBox kann. So orten Sie raum-grob das eigene Handy im eigenen Zuhause — Open Source, harmlos.">
+<meta name="keywords" content="wlan durch waende sehen, wlan personen erkennen, person ohne handy orten, fritzbox ortung, wlan signalstaerke">
+<meta name="author" content="aslan4u.de">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://aslan4u.de/blog/wlan-durch-waende-sehen.html">
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="de_DE">
+<meta property="og:title" content="Kann WLAN durch Wände sehen? Was wirklich geht — und was Hype ist">
+<meta property="og:description" content="Die ehrliche Antwort: kein Röntgenblick. WLAN reagiert auf Menschen, aber eine normale FritzBox sieht nicht durch Wände. Was wirklich geht — raum-grobe Ortung des eigenen Handys im eigenen Zuhause, Open Source.">
+<meta property="og:url" content="https://aslan4u.de/blog/wlan-durch-waende-sehen.html">
+<meta property="og:site_name" content="aslan4u.de">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Kann WLAN durch Wände sehen? Was wirklich geht — und was Hype ist">
+<meta name="twitter:description" content="Die ehrliche Antwort: kein Röntgenblick. Was Forscher mit Spezial-Hardware können ist nicht, was eine FritzBox kann.">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Kann WLAN wirklich durch Wände sehen?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Nein, kein Röntgenblick. WLAN-Funkwellen werden von Menschen gedämpft und reflektiert, das lässt sich messen. Aber das ist kein Durchsicht-Bild. Forscher erzeugen mit Spezial-Hardware (CSI-Daten) grobe Bewegungs-Muster — eine normale FritzBox kann das nicht."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Kann man mit WLAN Personen ohne Handy erkennen?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Im Labor mit Spezial-Hardware teilweise ja, weil der Körper das Funksignal beeinflusst. Mit normaler Heimtechnik wie einer FritzBox nicht. Die FritzBox sieht nur Geräte, die mit ihr verbunden sind — also Handys mit eingeschaltetem WLAN, keine handylosen Personen."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Was kann eine FritzBox dann wirklich orten?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Die FritzBox kennt die Signalstärke (dBm) jedes verbundenen Geräts. Daraus lässt sich raum-grob schätzen, ob das eigene Handy eher nah oder fern ist, eher im Erdgeschoss oder im Obergeschoss. Das ist eine grobe Schätzung, keine zentimetergenaue Ortung."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Darf ich damit fremde Personen orten?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Nein. Das Projekt ist ausschließlich für das eigene Zuhause und die eigenen Bewohner gedacht. Fremde, Mitarbeiter, Kunden oder Nachbarn zu orten ist weder das Ziel noch technisch über diesen Weg möglich — und wäre rechtlich und ethisch tabu."
+      }
+    }
+  ]
+}
+</script>
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0E1116;
+    --bg-2: #141922;
+    --red: #E62E33;
+    --blue: #1E9BD7;
+    --green: #34C759;
+    --text: #E8EDF3;
+    --dim: #8B98A5;
+    --glass: rgba(255,255,255,.06);
+    --glass-border: rgba(255,255,255,.12);
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.75;
+    font-size: 17px;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(900px 500px at 80% -10%, rgba(230,46,51,.10), transparent 60%),
+      radial-gradient(900px 500px at 0% 10%, rgba(30,155,215,.08), transparent 55%);
+    background-attachment: fixed;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 22px; }
+  header.site {
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(14,17,22,.7);
+    backdrop-filter: blur(10px);
+    position: sticky; top: 0; z-index: 10;
+  }
+  header.site .wrap {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 14px; padding-bottom: 14px;
+  }
+  .brand { font-weight: 700; letter-spacing: .3px; font-size: 18px; color: var(--text); text-decoration: none; }
+  .brand b { color: var(--red); }
+  .nav a { color: var(--dim); text-decoration: none; font-size: 15px; margin-left: 18px; transition: color .2s; }
+  .nav a:hover { color: var(--text); }
+
+  article { padding: 38px 0 10px; }
+  .eyebrow {
+    display: inline-block; font-size: 13px; letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--red); font-weight: 700; margin-bottom: 14px;
+  }
+  h1 {
+    font-size: clamp(28px, 5vw, 42px); line-height: 1.18; font-weight: 800;
+    letter-spacing: -.5px; margin-bottom: 10px;
+  }
+  .sub { color: var(--dim); font-size: 18px; margin-bottom: 26px; max-width: 640px; }
+
+  .lede {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-left: 4px solid var(--red);
+    border-radius: 14px;
+    backdrop-filter: blur(14px);
+    padding: 22px 24px;
+    font-size: 18px;
+    margin-bottom: 34px;
+  }
+  .lede strong { color: var(--text); }
+
+  h2 {
+    font-size: 26px; font-weight: 700; letter-spacing: -.3px;
+    margin: 40px 0 14px; padding-top: 8px;
+  }
+  h3 { font-size: 20px; font-weight: 700; margin: 26px 0 10px; }
+  p { margin-bottom: 18px; color: #D4DCE4; }
+  p strong, li strong { color: var(--text); }
+  a.inline { color: var(--blue); }
+
+  .panel {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    backdrop-filter: blur(14px);
+    padding: 22px 24px;
+    margin: 26px 0;
+  }
+  .panel.blue  { border-left: 4px solid var(--blue); }
+  .panel.green { border-left: 4px solid var(--green); }
+  .panel.red   { border-left: 4px solid var(--red); }
+  .panel h3 { margin-top: 0; }
+  .panel h3 .ic { font-size: 15px; vertical-align: middle; margin-right: 8px; }
+  .panel.blue h3  { color: var(--blue); }
+  .panel.green h3 { color: var(--green); }
+  .panel.red h3   { color: #ff6b6f; }
+
+  .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 26px 0; }
+  .card {
+    background: var(--glass); border: 1px solid var(--glass-border);
+    border-radius: 14px; backdrop-filter: blur(14px); padding: 20px 22px;
+  }
+  .card .tag { font-size: 13px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; }
+  .card.myth .tag { color: #ff6b6f; }
+  .card.fact .tag { color: var(--green); }
+  .card h4 { font-size: 17px; margin: 8px 0 8px; color: var(--text); }
+  .card p { font-size: 15px; margin: 0; color: var(--dim); }
+
+  ul.clean { list-style: none; margin: 14px 0 18px; }
+  ul.clean li { position: relative; padding-left: 28px; margin-bottom: 12px; color: #D4DCE4; }
+  ul.clean li::before {
+    content: ""; position: absolute; left: 4px; top: 11px;
+    width: 8px; height: 8px; border-radius: 50%; background: var(--blue);
+  }
+  ul.clean.yes li::before { background: var(--green); }
+  ul.clean.no  li::before { background: var(--red); }
+
+  .cta-box {
+    background: linear-gradient(135deg, rgba(230,46,51,.12), rgba(30,155,215,.10));
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+    padding: 30px 26px;
+    margin: 40px 0 16px;
+    text-align: center;
+  }
+  .cta-box h2 { margin: 0 0 8px; }
+  .cta-box p { color: var(--dim); max-width: 520px; margin: 0 auto 22px; }
+  .btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    text-decoration: none; font-weight: 700; font-size: 16px;
+    padding: 13px 24px; border-radius: 12px; transition: transform .15s, box-shadow .15s, background .2s;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn.primary { background: var(--red); color: #fff; box-shadow: 0 8px 24px rgba(230,46,51,.32); }
+  .btn.primary:hover { background: #ff3a40; }
+  .btn.ghost { background: var(--glass); color: var(--text); border: 1px solid var(--glass-border); }
+  .btn.ghost:hover { background: rgba(255,255,255,.10); }
+
+  .faq details {
+    background: var(--glass); border: 1px solid var(--glass-border);
+    border-radius: 12px; padding: 4px 20px; margin-bottom: 12px;
+  }
+  .faq summary {
+    cursor: pointer; font-weight: 700; font-size: 17px; padding: 16px 0; list-style: none;
+    display: flex; justify-content: space-between; align-items: center; color: var(--text);
+  }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; color: var(--red); font-size: 24px; font-weight: 400; line-height: 1; }
+  .faq details[open] summary::after { content: "–"; }
+  .faq details p { color: var(--dim); padding-bottom: 16px; margin: 0; font-size: 16px; }
+
+  footer.site {
+    margin-top: 40px; border-top: 1px solid var(--glass-border);
+    background: rgba(0,0,0,.25);
+  }
+  footer.site .wrap { padding: 28px 22px 40px; }
+  .disclaimer { font-size: 13px; color: var(--dim); line-height: 1.7; margin-bottom: 14px; }
+  .disclaimer strong { color: #aeb8c2; }
+  .foot-links a { color: var(--blue); text-decoration: none; font-size: 14px; margin-right: 18px; }
+  .foot-links a:hover { text-decoration: underline; }
+
+  @media (max-width: 600px) {
+    body { font-size: 16px; }
+    .twocol { grid-template-columns: 1fr; }
+    .nav a:first-child { display: none; }
+    .lede, .panel, .card { padding: 18px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="../index.html">aslan4u<b>.de</b></a>
+    <nav class="nav">
+      <a href="../index.html">Start</a>
+      <a href="https://github.com/Aslan4u73/FritzTrack4u" target="_blank" rel="noopener">Projekt</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <article>
+    <span class="eyebrow">Funk &amp; Fakten</span>
+    <h1>Kann WLAN durch Wände sehen? Was wirklich geht — und was Hype ist</h1>
+    <p class="sub">Schlagzeilen versprechen Röntgenblick durchs Funknetz. Die ehrliche, geerdete Antwort — und was Sie mit Ihrer eigenen FritzBox wirklich machen können.</p>
+
+    <div class="lede">
+      <p style="margin:0;">Kurz und ehrlich vorweg: <strong>Nein, WLAN sieht nicht durch Wände</strong> — keinen Röntgenblick, kein Bild von Menschen im Nebenzimmer. Was die Presse zeigt, läuft im Labor mit teurer Spezial-Hardware. Was eine normale FritzBox kann, ist viel bescheidener und völlig harmlos: Sie kann die <strong>Signalstärke des eigenen Handys</strong> auslesen und daraus <strong>raum-grob</strong> schätzen, in welchem Raum oder auf welcher Etage es ungefähr ist. Nur im <strong>eigenen Zuhause</strong>, nur für die <strong>eigenen Geräte</strong> — nicht zentimetergenau und nicht für fremde Personen.</p>
+    </div>
+
+    <h2>Warum gerade alle über „WLAN sieht Personen" reden</h2>
+    <p>2024 und 2025 ging eine Presse-Welle durch die Medien: Forscher des <strong>KIT</strong> (Karlsruher Institut für Technologie) und das System <strong>„WhoFi"</strong> zeigten, dass sich Menschen anhand von WLAN-Funksignalen erkennen und sogar unterscheiden lassen. Überschriften wie „WLAN kann durch Wände sehen" oder „Funknetz erkennt Personen ohne Kamera" machten die Runde. Das klingt nach Science-Fiction — und genau hier trennt sich Fakt von Hype.</p>
+    <p>Der wahre Kern: Ein menschlicher Körper besteht großteils aus Wasser und beeinflusst Funkwellen. Wer durch einen Raum geht, <strong>dämpft und reflektiert</strong> das WLAN-Signal auf charakteristische Weise. Diese winzigen Schwankungen lassen sich messen — und daraus kann eine KI grobe Bewegungs- und Anwesenheits-Muster ableiten. Das ist echte Forschung. Aber es ist <em>weit</em> entfernt von dem, was die Schlagzeilen suggerieren.</p>
+
+    <h2>Fakt gegen Hype — sauber getrennt</h2>
+    <div class="twocol">
+      <div class="card fact">
+        <span class="tag">Fakt</span>
+        <h4>WLAN reagiert auf Menschen</h4>
+        <p>Körper dämpfen und reflektieren Funkwellen. Diese Veränderung ist messbar — das ist physikalisch korrekt.</p>
+      </div>
+      <div class="card myth">
+        <span class="tag">Hype</span>
+        <h4>„Röntgenblick durch Wände"</h4>
+        <p>Es entsteht kein Bild, keine Durchsicht. Nur statistische Muster aus Signal-Schwankungen — keine Kamera-Ansicht.</p>
+      </div>
+      <div class="card fact">
+        <span class="tag">Fakt</span>
+        <h4>Forscher brauchen Spezial-Hardware</h4>
+        <p>Die Studien nutzen rohe Funkdaten (CSI — Channel State Information) aus angepasster Hardware.</p>
+      </div>
+      <div class="card myth">
+        <span class="tag">Hype</span>
+        <h4>„Jeder Router kann das"</h4>
+        <p>Eine normale FritzBox liefert keine CSI-Daten an Endnutzer. Der Labor-Trick funktioniert mit ihr nicht.</p>
+      </div>
+    </div>
+
+    <div class="panel blue">
+      <h3><span class="ic">●</span>Der entscheidende Unterschied: CSI vs. dBm</h3>
+      <p style="margin-bottom:10px;"><strong>CSI (Channel State Information)</strong> ist der hochauflösende Funk-Fingerabdruck, mit dem Forscher arbeiten — tausende Messpunkte pro Sekunde, Spezial-Hardware nötig. Damit lässt sich im Labor Bewegung „durch" eine Wand grob erahnen.</p>
+      <p style="margin:0;"><strong>dBm (Signalstärke)</strong> ist das, was eine FritzBox jedem Nutzer zeigt: ein einziger Wert pro verbundenem Gerät, wie viele Balken das Handy hat. Daraus baut man keinen Röntgenblick — aber genau dieser harmlose Wert ist der nützliche, ehrliche Teil.</p>
+    </div>
+
+    <h2>Was eine FritzBox wirklich kann</h2>
+    <p>Hier landen wir beim Bodenständigen. Ihre FritzBox kennt von jedem <strong>verbundenen</strong> Gerät die aktuelle Signalstärke. Geht Ihr Handy mit Ihnen durch die Wohnung, ändert sich dieser Wert: nah am Router stark, ein Stockwerk höher schwächer. Aus diesem Verlauf lässt sich <strong>raum-grob</strong> schätzen, wo das Handy gerade ungefähr ist.</p>
+
+    <div class="panel green">
+      <h3><span class="ic">●</span>Das geht — harmlos und ehrlich</h3>
+      <ul class="clean yes">
+        <li>Die Signalstärke (dBm) des <strong>eigenen</strong> Handys auslesen.</li>
+        <li>Daraus <strong>raum-grob</strong> schätzen: eher Wohnzimmer oder Schlafzimmer, eher Erd- oder Obergeschoss.</li>
+        <li>Erkennen, ob ein Gerät <strong>zuhause</strong> ist oder das WLAN verlassen hat.</li>
+        <li>Alles läuft lokal, im <strong>eigenen Netz</strong>, ohne Cloud, ohne fremde Daten.</li>
+      </ul>
+    </div>
+
+    <div class="panel red">
+      <h3><span class="ic">●</span>Das geht ausdrücklich NICHT</h3>
+      <ul class="clean no">
+        <li>Kein Durch-die-Wand-Sehen, kein Bild, kein Röntgenblick.</li>
+        <li>Keine <strong>zentimetergenaue</strong> Position — es bleibt eine grobe Raum-Schätzung.</li>
+        <li>Keine Erkennung von Personen <strong>ohne Handy</strong> — die FritzBox sieht nur verbundene Geräte.</li>
+        <li>Kein Orten von <strong>Fremden, Mitarbeitern, Kunden oder Nachbarn</strong>. Tabu — technisch wie rechtlich.</li>
+      </ul>
+    </div>
+
+    <p>Anders gesagt: Die ehrliche Frage ist nicht „Kann ich Personen durch Wände sehen?", sondern „Kann ich raum-grob erkennen, wo mein eigenes Handy in meiner Wohnung ist?". Letzteres geht — und ist nützlich für Smart-Home-Spielereien wie „Licht an, wenn ich im Wohnzimmer bin".</p>
+
+    <div class="cta-box">
+      <h2>FritzTrack4u — das Open-Source-Projekt</h2>
+      <p>Genau dafür gibt es FritzTrack4u: liest die WLAN-Signalstärke Ihrer eigenen Geräte aus der FritzBox und schätzt raum-grob die Position. Quelloffen, lokal, fürs eigene Zuhause. Kein Versprechen, das die Technik nicht hält.</p>
+      <div class="btns">
+        <a class="btn primary" href="https://github.com/Aslan4u73/FritzTrack4u" target="_blank" rel="noopener">Projekt auf GitHub ansehen</a>
+        <a class="btn ghost" href="../index.html">Zurück zur Hauptseite</a>
+      </div>
+    </div>
+
+    <h2>Häufige Fragen</h2>
+    <div class="faq">
+      <details open>
+        <summary>Kann WLAN wirklich durch Wände sehen?</summary>
+        <p>Nein, kein Röntgenblick. WLAN-Funkwellen werden von Menschen gedämpft und reflektiert, das lässt sich messen. Aber daraus entsteht kein Durchsicht-Bild. Forscher erzeugen mit Spezial-Hardware (CSI-Daten) grobe Bewegungs-Muster — eine normale FritzBox kann das nicht.</p>
+      </details>
+      <details>
+        <summary>Kann man mit WLAN Personen ohne Handy erkennen?</summary>
+        <p>Im Labor mit Spezial-Hardware teilweise ja, weil der Körper das Funksignal beeinflusst. Mit normaler Heimtechnik wie einer FritzBox nicht. Die FritzBox sieht nur Geräte, die mit ihr verbunden sind — also Handys mit eingeschaltetem WLAN, keine handylosen Personen.</p>
+      </details>
+      <details>
+        <summary>Was kann eine FritzBox dann wirklich orten?</summary>
+        <p>Die FritzBox kennt die Signalstärke (dBm) jedes verbundenen Geräts. Daraus lässt sich raum-grob schätzen, ob das eigene Handy eher nah oder fern ist, eher im Erdgeschoss oder im Obergeschoss. Das ist eine grobe Schätzung, keine zentimetergenaue Ortung.</p>
+      </details>
+      <details>
+        <summary>Darf ich damit fremde Personen orten?</summary>
+        <p>Nein. Das Projekt ist ausschließlich für das eigene Zuhause und die eigenen Bewohner gedacht. Fremde, Mitarbeiter, Kunden oder Nachbarn zu orten ist weder das Ziel noch über diesen Weg technisch möglich — und wäre rechtlich und ethisch tabu.</p>
+      </details>
+    </div>
+
+  </article>
+</div>
+
+<footer class="site">
+  <div class="wrap">
+    <p class="disclaimer">
+      <strong>Marken-Hinweis:</strong> FRITZ! und FRITZ!Box sind eingetragene Marken der FRITZ! GmbH (vormals AVM). Dieses Projekt ist unabhängig und nicht mit AVM/FRITZ! verbunden.
+      <br><strong>Haftung:</strong> Nutzung auf eigene Gefahr, keine Haftung. Ausschließlich für das eigene Zuhause und die eigenen Bewohner gedacht — nicht zum Orten fremder Personen.
+    </p>
+    <div class="foot-links">
+      <a href="https://aslan4u.de">aslan4u.de</a>
+      <a href="https://github.com/Aslan4u73/FritzTrack4u" target="_blank" rel="noopener">FritzTrack4u auf GitHub</a>
+      <a href="../index.html">Hauptseite</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

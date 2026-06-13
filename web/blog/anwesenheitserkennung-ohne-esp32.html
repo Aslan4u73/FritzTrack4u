@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anwesenheitserkennung ohne ESP32 — nur mit deiner FritzBox | FritzTrack4U</title>
+<meta name="description" content="Home Assistant ohne ESP32: Anwesenheitserkennung ohne App, ohne Loeten, ohne Bastel-Hardware. Presence Detection without ESP32 — nur mit den FritzBoxen, die du schon hast. Ehrlicher Vergleich zu ESPresense und Bermuda.">
+<meta name="keywords" content="home assistant ohne esp32, anwesenheitserkennung ohne app, presence detection without esp32, fritzbox presence, home assistant fritzbox">
+<meta name="author" content="aslan4u.de">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://aslan4u.de/fritztrack4u/anwesenheitserkennung-ohne-esp32.html">
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="Anwesenheitserkennung ohne ESP32 — nur mit deiner FritzBox">
+<meta property="og:description" content="Home Assistant ohne ESP32: Presence Detection ohne App, ohne Loeten, ohne Bastel-Hardware. Nur mit den FritzBoxen, die du schon hast. Ehrlicher Vergleich zu ESPresense und Bermuda.">
+<meta property="og:url" content="https://aslan4u.de/fritztrack4u/anwesenheitserkennung-ohne-esp32.html">
+<meta property="og:site_name" content="aslan4u.de">
+<meta property="og:locale" content="de_DE">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Anwesenheitserkennung ohne ESP32 — nur mit deiner FritzBox">
+<meta name="twitter:description" content="Presence Detection without ESP32: Home Assistant Anwesenheitserkennung ohne App und ohne Bastel-Hardware. Nur mit deinen vorhandenen FritzBoxen.">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Kann ich Home Assistant Anwesenheitserkennung ohne ESP32 nutzen?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Ja. FritzTrack4U liest die WLAN-Verbindungsdaten deiner vorhandenen FritzBoxen aus und erkennt raum-grob, wer zu Hause ist und in welchem Bereich. Du brauchst keine ESP32-Boards, kein Loeten und kein Flashen. ESP32-Loesungen wie ESPresense sind genauer, FritzTrack ist dafuer kostenlos und ohne Zusatz-Hardware."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Geht Anwesenheitserkennung ohne App auf dem Handy?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Ja. FritzTrack4U braucht keine App und kein Tracking auf dem Handy. Es nutzt nur die Tatsache, dass dein Handy sich automatisch mit deinem eigenen WLAN verbindet. Es wird kein GPS, kein Standort und keine App-Berechtigung benoetigt."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Wie genau ist presence detection without ESP32 ueber die FritzBox?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Raum-grob, nicht zentimetergenau. Die FritzBox liefert pro Handy nur einen Signalwert (dBm) der verbundenen Box. Mit mehreren FritzBoxen oder Repeatern kann FritzTrack erkennen, in welchem Bereich der Wohnung jemand ist. Eine echte Triangulation auf Zentimeter ist mit WLAN-Daten physikalisch nicht moeglich — dafuer braucht es ESP32-Boards in jedem Raum."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Darf ich damit fremde Personen orten?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Nein. FritzTrack4U ist ausschliesslich fuer dein eigenes Zuhause und deine eigenen Mitbewohner gedacht, die dem zustimmen. Es ist kein Werkzeug, um Fremde, Mitarbeiter, Kunden oder Nachbarn zu ueberwachen. Nutze es nur fuer Geraete und Personen in deinem eigenen Haushalt."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Was kostet FritzTrack4U?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Nichts. Es ist ein kostenloses Open-Source-Projekt fuer Home Assistant. Du brauchst keine zusaetzliche Hardware kaufen, wenn du bereits eine FritzBox nutzt."
+      }
+    }
+  ]
+}
+</script>
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0E1116;
+    --bg2: #141921;
+    --red: #E62E33;
+    --blue: #1E9BD7;
+    --green: #34C759;
+    --text: #E8EDF3;
+    --dim: #8B98A5;
+    --glass: rgba(255,255,255,.06);
+    --glass-border: rgba(255,255,255,.10);
+    --maxread: 720px;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.7;
+    font-size: 17px;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(230,46,51,.08), transparent 42%),
+      radial-gradient(circle at 88% 22%, rgba(30,155,215,.07), transparent 45%);
+    background-attachment: fixed;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 22px 80px; }
+  .read { max-width: var(--maxread); margin-left: auto; margin-right: auto; }
+
+  header.top {
+    max-width: 880px; margin: 0 auto; padding: 22px 22px 0;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: .2px; }
+  .brand .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--red); box-shadow: 0 0 14px rgba(230,46,51,.7); }
+  .brand b { color: var(--text); }
+  .brand span { color: var(--red); }
+  .nav a { color: var(--dim); text-decoration: none; font-size: 14px; margin-left: 18px; transition: color .15s; }
+  .nav a:hover { color: var(--text); }
+
+  .hero { padding: 48px 0 14px; }
+  .kicker {
+    display: inline-block; font-size: 12.5px; letter-spacing: 1.4px; text-transform: uppercase;
+    color: var(--red); font-weight: 600; margin-bottom: 16px;
+    border: 1px solid rgba(230,46,51,.4); padding: 5px 12px; border-radius: 999px;
+    background: rgba(230,46,51,.08);
+  }
+  h1 {
+    font-size: 40px; line-height: 1.15; font-weight: 700; letter-spacing: -.5px;
+    margin-bottom: 18px;
+  }
+  h1 .accent { color: var(--red); }
+  .lede { font-size: 19px; color: var(--text); opacity: .92; }
+
+  .panel {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 22px 24px;
+    margin: 26px 0;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .panel.honest { border-left: 3px solid var(--green); }
+  .panel.honest h3 { color: var(--green); }
+  .panel.warn { border-left: 3px solid var(--red); }
+  .panel.warn h3 { color: var(--red); }
+  .panel h3 { font-size: 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .panel p { color: var(--text); opacity: .9; font-size: 16px; }
+  .panel p + p { margin-top: 10px; }
+
+  h2 {
+    font-size: 27px; font-weight: 700; letter-spacing: -.3px;
+    margin: 52px 0 14px; padding-top: 8px;
+  }
+  h2 .num { color: var(--blue); font-weight: 700; margin-right: 10px; opacity: .85; }
+  p.body { margin: 14px 0; color: var(--text); opacity: .9; }
+  p.body strong { color: var(--text); opacity: 1; font-weight: 600; }
+  a.inline { color: var(--blue); text-decoration: none; border-bottom: 1px solid rgba(30,155,215,.4); }
+  a.inline:hover { border-bottom-color: var(--blue); }
+
+  ul.checks { list-style: none; margin: 16px 0; }
+  ul.checks li { padding: 7px 0 7px 30px; position: relative; color: var(--text); opacity: .92; }
+  ul.checks li::before {
+    content: "\2713"; position: absolute; left: 0; top: 7px;
+    color: var(--green); font-weight: 700; font-size: 16px;
+  }
+  ul.crosses li::before { content: "\2715"; color: var(--red); }
+
+  .tablewrap { overflow-x: auto; margin: 22px 0; border-radius: 14px; }
+  table {
+    width: 100%; border-collapse: collapse; font-size: 15px;
+    background: var(--glass); border: 1px solid var(--glass-border);
+    border-radius: 14px; overflow: hidden;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  }
+  th, td { text-align: left; padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,.07); }
+  thead th { background: rgba(255,255,255,.04); font-size: 13.5px; text-transform: uppercase; letter-spacing: .6px; color: var(--dim); font-weight: 600; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.feat { color: var(--text); font-weight: 500; }
+  .yes { color: var(--green); font-weight: 600; }
+  .no { color: var(--red); font-weight: 600; }
+  .meh { color: var(--blue); font-weight: 600; }
+  caption { caption-side: bottom; color: var(--dim); font-size: 13px; padding-top: 10px; text-align: left; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 24px 0; }
+  .col-card {
+    background: var(--glass); border: 1px solid var(--glass-border); border-radius: 16px;
+    padding: 22px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  }
+  .col-card h4 { font-size: 18px; margin-bottom: 6px; }
+  .col-card .tag { font-size: 12.5px; letter-spacing: .6px; text-transform: uppercase; font-weight: 600; display: inline-block; margin-bottom: 12px; padding: 3px 10px; border-radius: 999px; }
+  .col-card.esp .tag { color: var(--blue); background: rgba(30,155,215,.12); border: 1px solid rgba(30,155,215,.3); }
+  .col-card.fritz .tag { color: var(--green); background: rgba(52,199,89,.12); border: 1px solid rgba(52,199,89,.3); }
+  .col-card p { font-size: 15px; color: var(--text); opacity: .88; }
+  .col-card ul.checks li { font-size: 14.5px; padding-left: 26px; }
+
+  .cta-row { display: flex; flex-wrap: wrap; gap: 14px; margin: 14px 0 4px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px; text-decoration: none;
+    padding: 14px 24px; border-radius: 12px; font-weight: 600; font-size: 15.5px;
+    transition: transform .12s, box-shadow .12s, background .15s;
+  }
+  .btn-primary { background: var(--red); color: #fff; box-shadow: 0 6px 22px rgba(230,46,51,.32); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(230,46,51,.45); }
+  .btn-ghost { background: var(--glass); color: var(--text); border: 1px solid var(--glass-border); }
+  .btn-ghost:hover { background: rgba(255,255,255,.10); transform: translateY(-2px); }
+  .btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+  .cta-block {
+    text-align: center; margin: 56px 0 20px; padding: 38px 28px;
+    background: var(--glass); border: 1px solid var(--glass-border); border-radius: 20px;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  }
+  .cta-block h2 { margin: 0 0 10px; }
+  .cta-block p { color: var(--dim); font-size: 16px; margin-bottom: 22px; max-width: 540px; margin-left: auto; margin-right: auto; }
+  .cta-block .cta-row { justify-content: center; }
+
+  .faq details {
+    background: var(--glass); border: 1px solid var(--glass-border); border-radius: 14px;
+    padding: 4px 20px; margin: 12px 0;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  }
+  .faq summary {
+    cursor: pointer; padding: 16px 0; font-weight: 600; font-size: 16.5px;
+    list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 14px;
+  }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; color: var(--blue); font-size: 24px; font-weight: 400; line-height: 1; }
+  .faq details[open] summary::after { content: "\2212"; }
+  .faq details p { padding: 0 0 18px; color: var(--text); opacity: .88; font-size: 16px; }
+
+  footer {
+    max-width: 880px; margin: 60px auto 0; padding: 28px 22px 50px;
+    border-top: 1px solid rgba(255,255,255,.08);
+    color: var(--dim); font-size: 13.5px; line-height: 1.7;
+  }
+  footer a { color: var(--blue); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  footer .disc { margin-top: 14px; opacity: .82; }
+  footer .row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+
+  @media (max-width: 700px) {
+    h1 { font-size: 31px; }
+    .lede { font-size: 17px; }
+    h2 { font-size: 23px; }
+    .cols { grid-template-columns: 1fr; }
+    .nav { display: none; }
+    body { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><span class="dot"></span><b>FritzTrack</b><span>4U</span></div>
+  <nav class="nav">
+    <a href="../index.html">Start</a>
+    <a href="#vergleich">Vergleich</a>
+    <a href="#faq">FAQ</a>
+    <a href="https://github.com/Aslan4u73/FritzTrack4u">GitHub</a>
+  </nav>
+</header>
+
+<div class="wrap">
+
+  <section class="hero read">
+    <span class="kicker">Home Assistant · Presence Detection</span>
+    <h1>Anwesenheitserkennung ohne ESP32 — <span class="accent">nur mit deiner FritzBox</span></h1>
+    <p class="lede">Vorweg, damit klar ist worum es geht: Das hier ist <strong>kein Roentgenblick</strong> und kein Ueberwachungstool. Es erkennt nur, ob die Geraete deines eigenen Haushalts in deinem eigenen WLAN sind — raum-grob, nicht zentimetergenau. Kein Standort von Fremden, keine App auf dem Handy, kein GPS. Wenn du das gesucht hast: Home Assistant Anwesenheitserkennung ohne App und ohne Bastel-Hardware — dann bist du hier richtig.</p>
+  </section>
+
+  <div class="read">
+    <div class="panel honest">
+      <h3>Ehrlich vorab</h3>
+      <p>FritzTrack4U trianguliert nicht auf Zentimeter. Die FritzBox liefert pro Handy nur <strong>einen</strong> Signalwert (dBm) der verbundenen Box. Damit laesst sich erkennen: ist jemand zu Hause, und mit mehreren Boxen/Repeatern grob in welchem Bereich. Mehr verspricht dieses Projekt nicht — und genau das ist der Punkt.</p>
+    </div>
+
+    <p class="body">Die meisten Anleitungen fuer <strong>presence detection without ESP32</strong> enden schnell bei einem Satz: "Geht nicht gescheit, kauf dir ESP32-Boards." Stimmt fuer Zentimeter-Genauigkeit. Stimmt nicht, wenn du eigentlich nur wissen willst: Ist jemand daheim? Ist wer im Buero-Bereich oder im Schlafzimmer-Bereich? Soll das Licht angehen wenn niemand mehr da ist? Dafuer reicht, was deine FritzBox ohnehin schon misst.</p>
+
+    <p class="body">FritzTrack4U ist ein kostenloses Open-Source-Projekt fuer Home Assistant. Es liest ueber die normale FritzBox-Schnittstelle aus, welche Geraete verbunden sind und wie stark ihr Signal ist — und macht daraus einen Anwesenheits-Sensor. Ohne Loeten, ohne Flashen, ohne eine einzige neue Platine.</p>
+  </div>
+
+  <h2 id="vergleich" class="read"><span class="num">01</span>Der Unterschied zur Bastel-Konkurrenz</h2>
+  <div class="read">
+    <p class="body">Die bekannten Wege fuer Raum-Anwesenheit in Home Assistant — <strong>ESPresense</strong> und <strong>Bermuda</strong> — sind technisch stark. Aber sie haben einen Preis, der nicht in Euro steht: du musst in jeden relevanten Raum ein ESP32-Board stellen, die Firmware flashen, alles ins WLAN bringen und kalibrieren. Fuer viele ist das genau das Hobby. Fuer viele andere ist es genau die Huerde, an der das Projekt im Schrank landet.</p>
+  </div>
+
+  <div class="cols read">
+    <div class="col-card esp">
+      <span class="tag">ESPresense / Bermuda</span>
+      <h4>Der Bastel-Weg</h4>
+      <p>Maximale Genauigkeit, raumgenau bis zonengenau — wenn du bereit bist, Hardware zu verteilen.</p>
+      <ul class="checks crosses">
+        <li>ESP32-Board pro Raum noetig</li>
+        <li>Firmware flashen + einrichten</li>
+        <li>Kalibrierung pro Geraet</li>
+        <li>Strom + WLAN ueberall</li>
+      </ul>
+    </div>
+    <div class="col-card fritz">
+      <span class="tag">FritzTrack4U</span>
+      <h4>Der Hardware-freie Weg</h4>
+      <p>Raum-grob statt zentimetergenau — aber sofort startklar mit dem, was schon im Flur haengt.</p>
+      <ul class="checks">
+        <li>Nutzt vorhandene FritzBoxen</li>
+        <li>Nichts loeten, nichts flashen</li>
+        <li>Keine App auf dem Handy</li>
+        <li>Kostenlos &amp; Open Source</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 class="read"><span class="num">02</span>Was du NICHT kaufen musst</h2>
+  <div class="read">
+    <p class="body">Der ehrlichste Vergleich ist die Einkaufsliste. Links steht, was der klassische ESP32-Weg braucht — rechts, was FritzTrack4U davon verlangt.</p>
+  </div>
+  <div class="tablewrap read">
+    <table>
+      <caption>Vergleich Einkaufs- und Aufwandsliste. FritzTrack4U setzt voraus, dass bereits eine FritzBox im Haushalt ist.</caption>
+      <thead>
+        <tr>
+          <th>Was du brauchst</th>
+          <th>ESP32-Weg (ESPresense/Bermuda)</th>
+          <th>FritzTrack4U</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="feat">ESP32-Boards (1 pro Raum)</td><td class="no">noetig &mdash; ca. 5&ndash;10&nbsp;&euro; je Stueck</td><td class="yes">nicht noetig</td></tr>
+        <tr><td class="feat">USB-Netzteile pro Board</td><td class="no">noetig</td><td class="yes">nicht noetig</td></tr>
+        <tr><td class="feat">Loetkolben / Verkabelung</td><td class="no">je nach Board</td><td class="yes">nicht noetig</td></tr>
+        <tr><td class="feat">Firmware flashen</td><td class="no">pro Board</td><td class="yes">entfaellt</td></tr>
+        <tr><td class="feat">Handy-App / GPS-Tracking</td><td class="meh">teils noetig</td><td class="yes">entfaellt</td></tr>
+        <tr><td class="feat">FritzBox / Repeater</td><td class="meh">egal</td><td class="meh">vorhanden vorausgesetzt</td></tr>
+        <tr><td class="feat">Laufende Kosten</td><td class="yes">keine</td><td class="yes">keine</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="read"><span class="num">03</span>Wie genau ist das ehrlich?</h2>
+  <div class="read">
+    <p class="body">Hier kein Marketing. Die Wahrheit der WLAN-Physik: Dein Handy ist immer nur mit <strong>einer</strong> FritzBox oder einem Repeater gleichzeitig verbunden, und du bekommst auch nur von dieser einen Station einen Signalwert. Echtes Triangulieren — also drei Messpunkte gleichzeitig, die einen Standort auf den Meter ausrechnen — geht damit nicht. Das koennen die ESP32-Boards besser, weil jedes Board fuer sich misst.</p>
+
+    <p class="body">Was FritzTrack4U dafuer zuverlaessig kann:</p>
+    <ul class="checks">
+      <li><strong>Zu Hause / nicht zu Hause</strong> — sauber, weil das Handy sich beim Heimkommen automatisch verbindet.</li>
+      <li><strong>Bereich-grob</strong> — mit mehreren FritzBoxen/Repeatern: an welcher Station haengt das Geraet gerade, also in welchem Teil der Wohnung ungefaehr.</li>
+      <li><strong>Trend ueber Zeit</strong> — Signal wird staerker (kommt naeher) oder schwaecher (geht weg).</li>
+    </ul>
+
+    <div class="panel warn">
+      <h3>Wo die FritzBox an ihre Grenze kommt</h3>
+      <p>Zentimeter-Position, "in welcher Ecke des Raums", oder mehrere Personen im selben Raum sauber trennen — das leistet dBm nicht. Wer das braucht, ist mit ESP32 + Bermuda besser dran. FritzTrack ersetzt das nicht, es ist der pragmatische 80%-Weg ohne Hardware.</p>
+    </div>
+  </div>
+
+  <h2 class="read"><span class="num">04</span>Fuer wen welcher Weg?</h2>
+  <div class="read">
+    <ul class="checks">
+      <li><strong>Nimm FritzTrack4U</strong>, wenn du eine FritzBox hast, keine Lust auf Bastel-Hardware hast, und "ist jemand da / grob wo" dir reicht — z.&nbsp;B. fuer Heizung, Licht beim Verlassen, Anwesenheits-Automationen.</li>
+      <li><strong>Nimm ESPresense / Bermuda</strong>, wenn du raum- bis zonengenaue Ortung willst, gern bastelst, und bereit bist, in jeden Raum ein Board zu stellen.</li>
+      <li><strong>Kombiniere beides</strong>: FritzTrack als Grund-Anwesenheit fuers ganze Haus, ESP32 nur in den 1&ndash;2 Raeumen, wo es wirklich genau sein muss.</li>
+    </ul>
+  </div>
+
+  <div class="panel warn read">
+    <h3>Wichtig: nur das eigene Zuhause</h3>
+    <p>FritzTrack4U ist fuer <strong>dein</strong> Zuhause und <strong>deine</strong> Mitbewohner gedacht, die damit einverstanden sind. Es ist ausdruecklich kein Werkzeug, um Fremde, Nachbarn, Mitarbeiter oder Kunden zu orten oder zu ueberwachen. Setz es nur fuer Geraete und Personen in deinem eigenen Haushalt ein.</p>
+  </div>
+
+  <div class="cta-block read">
+    <h2>Selbst ausprobieren</h2>
+    <p>FritzTrack4U ist Open Source. Code anschauen, Issues lesen, ausprobieren — alles auf GitHub. Kein Account, keine Kosten.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/Aslan4u73/FritzTrack4u">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        Projekt auf GitHub
+      </a>
+      <a class="btn btn-ghost" href="../index.html">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 1 7v7.5h4.5V10h5v4.5H15V7L8 1.5z"/></svg>
+        Zurueck zur Hauptseite
+      </a>
+    </div>
+  </div>
+
+  <h2 id="faq" class="read"><span class="num">05</span>Haeufige Fragen</h2>
+  <div class="faq read">
+    <details open>
+      <summary>Kann ich Home Assistant Anwesenheitserkennung ohne ESP32 nutzen?</summary>
+      <p>Ja. FritzTrack4U liest die WLAN-Verbindungsdaten deiner vorhandenen FritzBoxen aus und erkennt raum-grob, wer zu Hause ist und in welchem Bereich. Du brauchst keine ESP32-Boards, kein Loeten und kein Flashen. ESP32-Loesungen wie ESPresense sind genauer, FritzTrack ist dafuer kostenlos und ohne Zusatz-Hardware.</p>
+    </details>
+    <details>
+      <summary>Geht Anwesenheitserkennung ohne App auf dem Handy?</summary>
+      <p>Ja. FritzTrack4U braucht keine App und kein Tracking auf dem Handy. Es nutzt nur, dass dein Handy sich automatisch mit deinem eigenen WLAN verbindet. Kein GPS, kein Standort, keine App-Berechtigung noetig.</p>
+    </details>
+    <details>
+      <summary>Wie genau ist presence detection without ESP32 ueber die FritzBox?</summary>
+      <p>Raum-grob, nicht zentimetergenau. Die FritzBox liefert pro Handy nur einen Signalwert (dBm) der verbundenen Box. Mit mehreren FritzBoxen oder Repeatern erkennt FritzTrack, in welchem Bereich der Wohnung jemand ist. Echte Triangulation auf Zentimeter ist mit WLAN-Daten physikalisch nicht moeglich — dafuer braucht es ESP32-Boards in jedem Raum.</p>
+    </details>
+    <details>
+      <summary>Darf ich damit fremde Personen orten?</summary>
+      <p>Nein. FritzTrack4U ist ausschliesslich fuer dein eigenes Zuhause und deine eigenen Mitbewohner gedacht, die zustimmen. Es ist kein Werkzeug, um Fremde, Mitarbeiter, Kunden oder Nachbarn zu ueberwachen. Nutze es nur fuer Geraete und Personen in deinem eigenen Haushalt.</p>
+    </details>
+    <details>
+      <summary>Was kostet FritzTrack4U?</summary>
+      <p>Nichts. Es ist ein kostenloses Open-Source-Projekt fuer Home Assistant. Wenn du bereits eine FritzBox nutzt, brauchst du keine zusaetzliche Hardware kaufen.</p>
+    </details>
+  </div>
+
+</div>
+
+<footer>
+  <div class="row">
+    <div class="brand"><span class="dot"></span><b>FritzTrack</b><span>4U</span></div>
+    <div>
+      <a href="https://github.com/Aslan4u73/FritzTrack4u">GitHub</a> &nbsp;·&nbsp;
+      <a href="../index.html">Hauptseite</a> &nbsp;·&nbsp;
+      <a href="https://aslan4u.de">aslan4u.de</a>
+    </div>
+  </div>
+  <p class="disc">FRITZ! und FRITZ!Box sind eingetragene Marken der FRITZ! GmbH (vormals AVM). Dieses Projekt ist unabhaengig und nicht mit AVM/FRITZ! verbunden. Nutzung auf eigene Gefahr, keine Haftung. Nur fuers eigene Zuhause.</p>
+  <p class="disc">© <span id="yr">2026</span> <a href="https://aslan4u.de">aslan4u.de</a> — FritzTrack4U ist ein freies Open-Source-Projekt fuer Home Assistant.</p>
+</footer>
+
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
+</script>
+
+</body>
+</html>

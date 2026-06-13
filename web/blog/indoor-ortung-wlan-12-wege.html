@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indoor Ortung per WLAN: Wie ich 12 Wege getestet habe (Open Source) | aslan4u.de</title>
+<meta name="description" content="Indoor Ortung per WLAN ehrlich erklaert: WLAN Signalstaerke auslesen, warum die FritzBox nur 1 dBm liefert und wie mein Open-Source Indoor Positioning entstand. Nur fuers eigene Zuhause, raum-grob statt cm-genau.">
+<meta name="robots" content="index, follow">
+<meta name="author" content="Murat Danis">
+<link rel="canonical" href="https://aslan4u.de/blog/indoor-ortung-wlan.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="article">
+<meta property="og:locale" content="de_DE">
+<meta property="og:title" content="Wie ich 12 Wege getestet habe, um Menschen per WLAN zu orten (und nicht aufgegeben habe)">
+<meta property="og:description" content="Indoor Positioning per WLAN ehrlich erklaert: warum die FritzBox nur 1 dBm liefert, was wirklich geht – und was bewusst nicht. Open Source, nur fuers eigene Zuhause.">
+<meta property="og:url" content="https://aslan4u.de/blog/indoor-ortung-wlan.html">
+<meta property="og:site_name" content="aslan4u.de">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Wie ich 12 Wege getestet habe, um Menschen per WLAN zu orten">
+<meta name="twitter:description" content="Indoor Ortung per WLAN ehrlich erklaert. Warum die FritzBox nur 1 dBm liefert. Open Source, nur fuers eigene Zuhause.">
+
+<style>
+  :root{
+    --bg:#0E1116;
+    --bg-2:#11161d;
+    --red:#E62E33;
+    --blue:#1E9BD7;
+    --green:#34C759;
+    --text:#E8EDF3;
+    --dim:#8B98A5;
+    --glass:rgba(255,255,255,.06);
+    --glass-border:rgba(255,255,255,.10);
+    --read:720px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(1100px 600px at 80% -10%, rgba(230,46,51,.12), transparent 60%),
+      radial-gradient(900px 500px at 5% 10%, rgba(30,155,215,.10), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.7;
+    font-size:17px;
+    -webkit-font-smoothing:antialiased;
+    padding:0 20px 80px;
+  }
+  .wrap{max-width:var(--read);margin:0 auto;}
+
+  /* Header / Nav */
+  header.nav{
+    max-width:920px;margin:0 auto;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:22px 0 10px;
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px;}
+  .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--red);box-shadow:0 0 14px rgba(230,46,51,.8);}
+  .brand a{color:var(--text);text-decoration:none;}
+  .nav-links a{color:var(--dim);text-decoration:none;font-size:14px;margin-left:18px;}
+  .nav-links a:hover{color:var(--text);}
+
+  /* Hero */
+  .hero{max-width:860px;margin:30px auto 10px;text-align:center;}
+  .eyebrow{
+    display:inline-block;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--blue);border:1px solid var(--glass-border);background:var(--glass);
+    padding:6px 14px;border-radius:999px;margin-bottom:22px;
+  }
+  h1{
+    font-size:clamp(28px,5vw,46px);line-height:1.18;font-weight:800;
+    letter-spacing:-.5px;margin-bottom:18px;
+  }
+  h1 .hl{color:var(--red);}
+  .lede{color:var(--dim);font-size:18px;max-width:640px;margin:0 auto;}
+  .meta-row{
+    margin-top:22px;color:var(--dim);font-size:13px;
+    display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center;
+  }
+  .meta-row .sep{opacity:.4;}
+
+  /* Glass panels */
+  .glass{
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    border-radius:16px;
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    padding:22px 24px;
+    margin:26px auto;
+  }
+  .honest{
+    border-left:3px solid var(--green);
+    background:linear-gradient(90deg, rgba(52,199,89,.10), var(--glass) 40%);
+  }
+  .honest .tag{color:var(--green);font-weight:700;font-size:13px;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:8px;}
+  .warn{
+    border-left:3px solid var(--red);
+    background:linear-gradient(90deg, rgba(230,46,51,.10), var(--glass) 40%);
+  }
+  .warn .tag{color:var(--red);font-weight:700;font-size:13px;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:8px;}
+
+  /* Body */
+  article{margin-top:14px;}
+  article p{margin:18px 0;}
+  h2{
+    font-size:clamp(22px,3.4vw,30px);font-weight:800;letter-spacing:-.3px;
+    margin:48px 0 6px;padding-top:10px;
+  }
+  h2 .num{color:var(--blue);font-variant-numeric:tabular-nums;margin-right:10px;opacity:.8;}
+  h3{font-size:19px;font-weight:700;margin:28px 0 4px;color:var(--text);}
+  a{color:var(--blue);text-decoration:none;border-bottom:1px solid rgba(30,155,215,.35);}
+  a:hover{border-bottom-color:var(--blue);}
+  strong{color:#fff;}
+  em{color:var(--dim);font-style:normal;}
+  ul,ol{margin:16px 0 16px 22px;}
+  li{margin:9px 0;}
+  code{
+    background:rgba(255,255,255,.07);border:1px solid var(--glass-border);
+    border-radius:6px;padding:1px 7px;font-size:14px;
+    font-family:"SF Mono",Menlo,Consolas,monospace;color:var(--blue);
+  }
+
+  /* dBm callout */
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:8px 0;}
+  .stat{background:rgba(255,255,255,.04);border:1px solid var(--glass-border);border-radius:12px;padding:16px;text-align:center;}
+  .stat .big{font-size:30px;font-weight:800;color:var(--red);font-variant-numeric:tabular-nums;}
+  .stat.blue .big{color:var(--blue);}
+  .stat.green .big{color:var(--green);}
+  .stat .lbl{font-size:13px;color:var(--dim);margin-top:4px;}
+
+  /* Steps / ways list */
+  .ways{counter-reset:way;list-style:none;margin-left:0;}
+  .ways li{
+    counter-increment:way;position:relative;padding-left:42px;margin:12px 0;
+  }
+  .ways li::before{
+    content:counter(way);position:absolute;left:0;top:0;
+    width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:700;color:var(--text);
+    background:var(--glass);border:1px solid var(--glass-border);
+  }
+
+  /* CTA */
+  .cta{
+    text-align:center;margin:46px auto;
+  }
+  .btn{
+    display:inline-block;font-weight:700;font-size:16px;text-decoration:none;border:none;
+    padding:14px 26px;border-radius:12px;margin:6px;cursor:pointer;transition:transform .12s ease,box-shadow .12s ease;
+  }
+  .btn:hover{transform:translateY(-2px);}
+  .btn-primary{background:var(--red);color:#fff;box-shadow:0 8px 24px rgba(230,46,51,.32);}
+  .btn-ghost{background:var(--glass);color:var(--text);border:1px solid var(--glass-border);}
+
+  /* FAQ */
+  .faq details{
+    border-bottom:1px solid var(--glass-border);padding:6px 0;
+  }
+  .faq summary{
+    cursor:pointer;font-weight:700;font-size:17px;padding:14px 4px;list-style:none;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary::after{content:"+";color:var(--blue);font-size:22px;font-weight:400;margin-left:14px;}
+  .faq details[open] summary::after{content:"–";}
+  .faq details p{margin:2px 4px 18px;color:var(--dim);}
+
+  /* Author */
+  .author{display:flex;gap:16px;align-items:center;}
+  .author .ava{
+    width:52px;height:52px;border-radius:50%;flex:0 0 52px;
+    background:linear-gradient(135deg,var(--red),var(--blue));
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:#fff;
+  }
+  .author .who{font-weight:700;}
+  .author .role{color:var(--dim);font-size:14px;}
+
+  /* Footer */
+  footer{
+    max-width:860px;margin:60px auto 0;padding-top:24px;
+    border-top:1px solid var(--glass-border);color:var(--dim);font-size:13px;line-height:1.6;
+  }
+  footer a{color:var(--dim);border-bottom:1px dotted rgba(139,152,165,.4);}
+  footer a:hover{color:var(--text);}
+  footer .disc{margin-top:10px;}
+
+  @media (max-width:560px){
+    body{font-size:16px;padding:0 16px 60px;}
+    .nav-links{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="brand"><span class="dot"></span><a href="https://aslan4u.de">aslan4u<span style="color:var(--dim)">.de</span></a></div>
+  <nav class="nav-links">
+    <a href="../index.html">Start</a>
+    <a href="/fritztrack4u">FritzTrack4u</a>
+    <a href="https://github.com/Aslan4u73/FritzTrack4u">GitHub</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <span class="eyebrow">Engineering-Tagebuch · Indoor Positioning</span>
+  <h1>Wie ich <span class="hl">12 Wege getestet</span> habe, um Menschen per WLAN zu orten<br>(und nicht aufgegeben habe)</h1>
+  <p class="lede">Eine ehrliche Geschichte ueber <strong>Indoor Ortung per WLAN</strong>, drei Mal "das geht nicht" — und warum ich trotzdem weitergemacht habe.</p>
+  <div class="meta-row">
+    <span>Von Murat Danis</span><span class="sep">•</span>
+    <span>Lesezeit ~7 Min</span><span class="sep">•</span>
+    <span>Open Source</span>
+  </div>
+</section>
+
+<div class="wrap">
+
+  <!-- ENTSCHAERFUNG IM ERSTEN ABSATZ -->
+  <div class="glass honest">
+    <span class="tag">Erst die Wahrheit, dann die Geschichte</span>
+    <p style="margin:0;">Bevor du weiterliest: Das hier ist <strong>kein Roentgenblick und kein Spionage-Tool</strong>. Ich kann mit dieser Technik niemanden auf den Zentimeter genau verfolgen, keine Fremden orten und nicht durch Waende schauen. Was tatsaechlich geht: im <strong>eigenen Zuhause</strong> grob erkennen, in welchem <strong>Raum</strong> sich ein Handy gerade befindet — raum-grob, nicht cm-genau. Mehr verspricht die Physik der WLAN-Signalstaerke nicht. Genau das ehrlich herauszufinden, war der eigentliche Job.</p>
+  </div>
+
+  <article>
+
+    <p>Es fing harmlos an. Ich wollte wissen: Ist jemand zuhause im Wohnzimmer oder schon im Schlafzimmer? Nicht um zu kontrollieren — sondern weil ich an Heim-Automatisierung bastle und das Licht, die Heizung und ein paar Routinen gern wissen wuerden, <em>wo</em> im Haus gerade Leben ist. Klingt simpel. Ist es nicht.</p>
+
+    <p>Die naive Annahme war: WLAN-Signale gibt es ueberall, jedes Handy funkt, also muesste man doch <strong>die WLAN-Signalstaerke auslesen</strong> und daraus die Position berechnen koennen. Drei Wochen, ein Dutzend Sackgassen und drei deutliche "das geht nicht" spaeter wusste ich es besser. Und genau dieses Bessere ist der Grund, warum ich diesen Text schreibe.</p>
+
+    <h2><span class="num">01</span>Die Triangulations-Falle</h2>
+
+    <p>Mein erster Plan war Lehrbuch-Triangulation: Wenn ich von drei Punkten aus weiss, wie stark ein Handy funkt, kann ich seine Position einkreisen — so machen es GPS-Satelliten, so machen es Profi-Systeme im Lager. Ich habe drei FritzBox-Repeater im Haus, also drei Messpunkte. Perfekt, dachte ich.</p>
+
+    <p>Dann kam der erste Realitaets-Schlag. Eine <strong>FritzBox liefert pro verbundenem Handy nur genau einen dBm-Wert</strong> — naemlich die Signalstaerke zu <em>der Box, mit der das Handy gerade verbunden ist</em>. Nicht zu allen dreien. Ein einziger Wert. Und mit einem einzigen Abstandswert kann man nicht triangulieren — man bekommt nur einen Kreis um eine Box, keinen Schnittpunkt.</p>
+
+    <div class="stat-grid">
+      <div class="stat"><div class="big">1</div><div class="lbl">dBm-Wert pro Handy (verbundene Box)</div></div>
+      <div class="stat blue"><div class="big">3</div><div class="lbl">noetig fuer echte Triangulation</div></div>
+      <div class="stat green"><div class="big">~Raum</div><div class="lbl">realistische Genauigkeit</div></div>
+    </div>
+
+    <p>Das war "unmoeglich" Nummer eins. Ich habe nicht aufgegeben, sondern die Frage umgedreht: Wenn ich nicht <em>wie stark</em> messen kann, kann ich vielleicht <em>an welcher Box</em> messen?</p>
+
+    <h2><span class="num">02</span>Mesh-Sticking: das Handy will nicht wechseln</h2>
+
+    <p>Naechste Idee: Im Mesh-WLAN gibt es ja mehrere Boxen. Wenn ich ins Schlafzimmer gehe, sollte sich mein Handy doch auf den naechsten Repeater umbuchen — und schon weiss ich grob den Raum. In der Theorie sauber. In der Praxis: <strong>Mesh-Sticking</strong>.</p>
+
+    <p>Handys sind faul. Solange das alte Signal "gut genug" ist, klebt das Geraet an der Box, mit der es sich verbunden hat — manchmal raumweit, manchmal stockwerkweit. Mein Handy blieb im Wohnzimmer eingebucht, obwohl ich laengst in der Kueche stand. Die Box-Zuordnung war also traege und teilweise einfach falsch. "Das geht nicht" Nummer zwei.</p>
+
+    <div class="glass">
+      <p style="margin:0;"><strong>Was ich dabei gelernt habe:</strong> WLAN-Ortung scheitert selten an der Mathematik. Sie scheitert an der <em>Hardware-Realitaet</em> — daran, welche Werte die Geraete ueberhaupt herausgeben und wie sie sich im Alltag verhalten. Wer das nicht kennt, baut wochenlang an einer Loesung, die physikalisch nie funktionieren kann.</p>
+    </div>
+
+    <h2><span class="num">03</span>Zwoelf Wege, drei Mal "unmoeglich"</h2>
+
+    <p>Zwischen den grossen Sackgassen lagen viele kleine. Ich habe systematisch durchprobiert — und jeder Weg hat mir entweder etwas beigebracht oder ein Tor zugeschlagen:</p>
+
+    <ol class="ways">
+      <li>Klassische Triangulation ueber drei Repeater — scheiterte am 1-dBm-Limit.</li>
+      <li>Signalstaerke-Fingerprinting ("Map" der Raeume) — zu instabil, dBm schwankt zu stark.</li>
+      <li>Box-Wechsel im Mesh als Raum-Signal — scheiterte am Mesh-Sticking.</li>
+      <li>Roundtrip-Zeit messen (Laufzeit statt Staerke) — die FritzBox gibt sie nicht heraus.</li>
+      <li>Bluetooth-Beacons parallel — funktioniert, aber braucht Extra-Hardware in jedem Raum.</li>
+      <li>WLAN-Probe-Requests passiv mitlesen — rechtlich heikel, fuer Fremde tabu, verworfen.</li>
+      <li>Nachbar-Netze als Referenz — unzuverlaessig und nicht meine Geraete, verworfen.</li>
+      <li>Bewegungs-Heuristik (kommt/geht) statt Position — half als Ergaenzung, nicht als Loesung.</li>
+      <li>Mehrere SSIDs erzwingen, um Box-Zuordnung zu schaerfen — half nur minimal.</li>
+      <li>TR-064-Schnittstelle der FritzBox abfragen — hier wurde es endlich interessant.</li>
+      <li>dBm ueber Zeit glaetten statt Momentwert — reduzierte das Flackern deutlich.</li>
+      <li>Pro-Box-Login statt Mesh-Master fragen — <strong>der Durchbruch</strong> (gleich mehr).</li>
+    </ol>
+
+    <p>Drei dieser Wege endeten mit einem klaren "das ist nicht moeglich" — von Foren, von der Doku, von der Hardware selbst. Bei zwei davon hatte ich recht zu widersprechen. Beim dritten hatte die Physik recht, und ich habe es akzeptiert. <strong>Den Unterschied zu erkennen ist die eigentliche Ingenieurs-Arbeit.</strong></p>
+
+    <h2><span class="num">04</span>Der Durchbruch: ein eigener Login pro Box</h2>
+
+    <p>Die Loesung lag nicht in mehr Mathematik, sondern in einem simplen Perspektivwechsel. Statt nur den <strong>Mesh-Master</strong> nach allen Geraeten zu fragen — der mir nur die eine, traege Gesamtsicht gab — habe ich mich <strong>bei jeder einzelnen FritzBox separat eingeloggt</strong> und jede Box <em>einzeln</em> gefragt: "Welche Geraete sind direkt bei dir eingebucht, und wie stark?"</p>
+
+    <p>Ploetzlich hatte ich pro Box eine eigene, ehrliche Liste. Die Box im Schlafzimmer wusste, wer bei <em>ihr</em> haengt. Die Box im Wohnzimmer wusste es fuer ihren Bereich. Kein Mesh-Brei mehr, sondern saubere Einzel-Sichten, die ich zusammensetzen konnte. Damit wurde aus "irgendwo im Haus" ein belastbares <strong>"vermutlich in diesem Raum"</strong> — raum-grob, stabil genug fuer Automatisierung, und ehrlich in seinen Grenzen.</p>
+
+    <div class="glass honest">
+      <span class="tag">Genau hier endet das Versprechen</span>
+      <p style="margin:0;">Das Ergebnis ist <strong>Raum-Ebene, keine Zentimeter</strong>. Es weiss "Schlafzimmer", nicht "30 cm links vom Bett". Wer cm-Genauigkeit braucht, kommt um Profi-Loesungen wie ESP32-Bermuda mit BLE-Beacons nicht herum. Mein Projekt nimmt bewusst, was die FritzBox <em>ehrlich</em> hergibt — und nicht mehr.</p>
+    </div>
+
+    <h2><span class="num">05</span>Warum das ein gutes Visitenkaertchen ist</h2>
+
+    <p>Ich bin AI-Engineer. Was diese Geschichte zeigt, ist nicht "ich kann WLAN orten" — sondern etwas Wichtigeres: <strong>Ich kenne die Grenzen.</strong> Ich verkaufe keine cm-Genauigkeit, wo nur Raum-Genauigkeit moeglich ist. Ich erkenne, wann ein "das geht nicht" stimmt und wann es nur Bequemlichkeit ist. Und ich bleibe an einem Problem dran, bis ich verstanden habe, <em>warum</em> es sich so verhaelt — nicht nur, <em>dass</em> es sich so verhaelt.</p>
+
+    <p>Ganz ehrlich zur Arbeitsteilung: Gebaut habe ich das zusammen mit meiner KI-Assistentin <strong>LISA</strong>, die mir beim Code, beim Testen und beim Durchprobieren der Wege geholfen hat. Die Idee, die Hartnaeckigkeit und die Entscheidung, welchem "unmoeglich" ich widerspreche — die kamen von mir. Genau so stelle ich mir gute Mensch-KI-Arbeit vor: Ich gebe die Richtung, die KI gibt Tempo.</p>
+
+    <div class="glass warn">
+      <span class="tag">Klare Grenze — bitte ernst nehmen</span>
+      <p style="margin:0;">Dieses Projekt ist <strong>ausschliesslich fuer das eigene Zuhause und die eigenen Bewohner</strong> gedacht. Es ist <strong>nicht</strong> dafuer da, Fremde, Mitarbeiter, Kunden oder Nachbarn zu orten oder zu ueberwachen. Wer das versucht, verlaesst nicht nur den Sinn des Projekts, sondern auch den rechtlich erlaubten Rahmen. Indoor Positioning per WLAN ist ein Werkzeug fuer das eigene Heim — Punkt.</p>
+    </div>
+
+    <h2><span class="num">06</span>Open Source — schau es dir an</h2>
+
+    <p>Der ganze Weg, der Code und die ehrlichen Grenzen stecken in <strong>FritzTrack4u</strong> — meinem Open-Source Projekt fuer <strong>Indoor Positioning per WLAN</strong> auf Basis der FritzBox. Kein Verkauf, kein Lock-in, kein Marketing-Versprechen. Du kannst den Code lesen, selbst ausprobieren und genau nachvollziehen, warum es raum-grob arbeitet und nicht cm-genau.</p>
+
+  </article>
+
+  <div class="cta">
+    <a class="btn btn-primary" href="https://github.com/Aslan4u73/FritzTrack4u">Projekt auf GitHub ansehen</a>
+    <a class="btn btn-ghost" href="/fritztrack4u">Mehr ueber FritzTrack4u</a>
+  </div>
+
+  <!-- FAQ -->
+  <h2 id="faq">Haeufige Fragen</h2>
+  <div class="faq glass">
+    <details>
+      <summary>Kann man mit WLAN wirklich Menschen orten?</summary>
+      <p>Nur sehr begrenzt. Man ortet nicht den Menschen, sondern dessen Handy — und das auch nur raum-grob im eigenen Netz. Keine cm-Genauigkeit, kein Verfolgen Fremder, kein Blick durch Waende. Was die WLAN-Signalstaerke (dBm) hergibt, reicht fuer "vermutlich in diesem Raum", mehr nicht.</p>
+    </details>
+    <details>
+      <summary>Warum liefert die FritzBox nur einen dBm-Wert pro Handy?</summary>
+      <p>Weil sie nur die Verbindung zu der Box meldet, mit der das Handy aktuell verbunden ist. Es gibt keine gleichzeitige Messung zu allen Boxen — und ohne mindestens drei Abstandswerte ist klassische Triangulation physikalisch nicht moeglich. Mein Workaround: jede Box einzeln einloggen und separat abfragen.</p>
+    </details>
+    <details>
+      <summary>Wie genau ist die Indoor Ortung per WLAN?</summary>
+      <p>Raum-Ebene. Das System erkennt grob, in welchem Raum ein Geraet ist — nicht die exakte Position im Raum. Fuer Heim-Automatisierung (Licht, Heizung, Anwesenheit) reicht das. Fuer cm-genaues Indoor-Tracking braucht man andere Technik wie BLE-Beacons (z.B. ESP32 Bermuda).</p>
+    </details>
+    <details>
+      <summary>Kann ich damit fremde Personen oder Mitarbeiter orten?</summary>
+      <p>Nein — und das ist auch nicht erlaubt. Das Projekt ist ausschliesslich fuer das eigene Zuhause und die eigenen Bewohner gedacht. Fremde, Kunden oder Mitarbeiter zu orten verletzt Privatsphaere und Recht. Bitte nutze es nur fuer dein eigenes Heimnetz.</p>
+    </details>
+    <details>
+      <summary>Ist das Projekt Open Source und kostenlos?</summary>
+      <p>Ja. FritzTrack4u liegt offen auf GitHub. Du kannst den Code lesen, anpassen und selbst betreiben — inklusive der dokumentierten Grenzen, damit du keine falschen Erwartungen aufbaust.</p>
+    </details>
+    <details>
+      <summary>Ist FritzTrack4u ein Produkt von AVM oder FRITZ!?</summary>
+      <p>Nein. Es ist ein unabhaengiges Hobby-/Open-Source-Projekt und steht in keiner Verbindung zu AVM bzw. der FRITZ! GmbH. FRITZ! und FRITZ!Box sind eingetragene Marken der jeweiligen Inhaber.</p>
+    </details>
+  </div>
+
+  <!-- Author -->
+  <div class="glass author">
+    <div class="ava">M</div>
+    <div>
+      <div class="who">Murat Danis</div>
+      <div class="role">AI-Engineer &amp; E-Commerce Allrounder · baut bodenstaendige Tools, die ehrlich sagen, was sie koennen — und was nicht.</div>
+    </div>
+  </div>
+
+  <div class="cta" style="margin-top:30px;">
+    <a class="btn btn-primary" href="https://github.com/Aslan4u73/FritzTrack4u">Zum Open-Source Repo</a>
+    <a class="btn btn-ghost" href="../index.html">Zurueck zur Hauptseite</a>
+  </div>
+
+</div>
+
+<footer>
+  <div class="wrap" style="max-width:860px;">
+    <strong style="color:var(--dim)">Disclaimer:</strong>
+    <div class="disc">FRITZ! und FRITZ!Box sind eingetragene Marken der FRITZ! GmbH (vormals AVM). Dieses Projekt ist unabhaengig und nicht mit AVM/FRITZ! verbunden. Nutzung auf eigene Gefahr, keine Haftung. Nur fuers eigene Zuhause und die eigenen Bewohner — nicht zum Orten Fremder.</div>
+    <div class="disc">© 2026 <a href="https://aslan4u.de">aslan4u.de</a> · <a href="https://github.com/Aslan4u73/FritzTrack4u">FritzTrack4u auf GitHub</a> · <a href="../index.html">Startseite</a></div>
+  </div>
+</footer>
+
+</body>
+</html>

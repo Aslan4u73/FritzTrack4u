@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wer ist gerade zu Hause? Raum- und Etagen-Erkennung mit der FritzBox | aslan4u.de</title>
+<meta name="description" content="Wer ist zuhause? Smart Home mit Raumerkennung in Home Assistant: Etage erkennen, Anwesenheit und Gaeste-Erkennung per FritzBox-WLAN. Ehrlich erklaert – raum-grob nach Kalibrierung, kein cm-GPS. Fremdes Geraet im WLAN erkennen als Sicherheits-Hinweis. Open Source.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://aslan4u.de/fritztrack4u/wer-ist-zuhause.html">
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="Wer ist gerade zu Hause? Raum- und Etagen-Erkennung mit der FritzBox">
+<meta property="og:description" content="Smart Home mit Raumerkennung in Home Assistant: Etage, Anwesenheit und Gaeste-Erkennung per FritzBox-WLAN – ehrlich erklaert, raum-grob nach Kalibrierung. Open Source.">
+<meta property="og:url" content="https://aslan4u.de/fritztrack4u/wer-ist-zuhause.html">
+<meta property="og:site_name" content="aslan4u.de">
+<meta property="og:locale" content="de_DE">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Wer ist gerade zu Hause? Raum- und Etagen-Erkennung mit der FritzBox">
+<meta name="twitter:description" content="Raumerkennung in Home Assistant per FritzBox-WLAN. Ehrlich erklaert, raum-grob nach Kalibrierung. Open Source.">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Kann ich damit sehen, in welchem Raum jemand gerade ist?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Raum-grob ja, nach einer Kalibrierung. Das System lernt die WLAN-Signalstaerke (dBm) deiner FritzBox und Repeater pro Raum und ordnet ein Handy dem wahrscheinlichsten Raum zu. Es ist keine cm-genaue GPS-Ortung – WLAN-Signale schwanken. Erwarte 'Wohnzimmer / Obergeschoss', nicht 'links neben dem Sofa'."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Erkennt das System auch die Etage?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Ja, wenn pro Etage mindestens ein FritzBox-Geraet oder Repeater steht. Die Etagen-Erkennung funktioniert in der Praxis oft sogar zuverlaessiger als die Raum-Erkennung, weil sich die Signalstaerke zwischen Stockwerken staerker unterscheidet als zwischen Nachbarraeumen."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Kann ich damit fremde Personen orten?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Nein. Das Projekt ist ausschliesslich fuer das eigene Zuhause und die eigenen Bewohner gedacht. Es erkennt nur Geraete, die in deinem eigenen WLAN angemeldet sind. Fremde, Mitarbeiter oder Kunden zu orten ist weder das Ziel noch technisch vorgesehen – und je nach Situation rechtlich unzulaessig."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Wie erkenne ich ein fremdes Geraet in meinem WLAN?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Das System fuehrt eine Liste der bekannten Geraete deines Haushalts. Taucht ein unbekanntes Geraet in deinem WLAN auf, kann Home Assistant einen Sicherheits-Hinweis ausloesen. Das hilft, ungebetene Mitnutzer im eigenen Netz zu bemerken."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Brauche ich teure Hardware?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Nein. Du brauchst eine FritzBox, optional FritzRepeater fuer mehr Genauigkeit, und eine Home-Assistant-Installation. Es werden keine extra Bluetooth-Beacons oder ESP32-Tracker benoetigt – das System nutzt das WLAN, das ohnehin schon da ist."
+      }
+    }
+  ]
+}
+</script>
+
+<style>
+  :root{
+    --bg:#0E1116; --panel:rgba(255,255,255,.06); --panel-border:rgba(255,255,255,.10);
+    --red:#E62E33; --blue:#1E9BD7; --green:#34C759;
+    --text:#E8EDF3; --dim:#8B98A5;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.7; font-size:17px; -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--blue); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  .wrap{max-width:880px; margin:0 auto; padding:0 22px;}
+  .read{max-width:720px;}
+
+  header.site{
+    border-bottom:1px solid var(--panel-border);
+    background:rgba(14,17,22,.85); backdrop-filter:blur(10px);
+    position:sticky; top:0; z-index:10;
+  }
+  header.site .wrap{display:flex; align-items:center; justify-content:space-between; height:56px;}
+  .brand{font-weight:600; letter-spacing:.3px; color:var(--text);}
+  .brand .dot{color:var(--red);}
+  .nav a{color:var(--dim); margin-left:18px; font-size:15px;}
+  .nav a:hover{color:var(--text);}
+
+  .hero{padding:54px 0 26px;}
+  .kicker{
+    display:inline-block; font-size:13px; letter-spacing:1.4px; text-transform:uppercase;
+    color:var(--red); font-weight:600; margin-bottom:16px;
+  }
+  h1{
+    font-size:clamp(28px,5vw,42px); line-height:1.18; margin:0 0 8px; font-weight:700;
+    letter-spacing:-.5px;
+  }
+  .sub{color:var(--dim); font-size:18px; margin-top:14px;}
+
+  article{padding:8px 0 40px;}
+  article p{margin:0 0 20px;}
+  h2{font-size:clamp(22px,3.6vw,28px); margin:46px 0 16px; font-weight:600; letter-spacing:-.3px;}
+  h3{font-size:19px; margin:30px 0 10px; font-weight:600;}
+  strong{color:#fff;}
+
+  .panel{
+    background:var(--panel); border:1px solid var(--panel-border);
+    border-radius:16px; padding:22px 24px; margin:26px 0;
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  }
+  .panel.lead{border-left:3px solid var(--red);}
+  .panel.limit{border-left:3px solid var(--blue);}
+  .panel h3{margin-top:0;}
+  .panel.limit ul{margin:10px 0 0; padding-left:20px;}
+  .panel.limit li{margin-bottom:9px; color:var(--text);}
+  .panel.limit li::marker{color:var(--blue);}
+
+  .features{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:16px; margin:28px 0;
+  }
+  .feat{
+    background:var(--panel); border:1px solid var(--panel-border);
+    border-radius:14px; padding:20px; backdrop-filter:blur(12px);
+  }
+  .feat .ico{
+    width:42px; height:42px; border-radius:11px; display:flex;
+    align-items:center; justify-content:center; font-size:21px; margin-bottom:12px;
+    background:rgba(230,46,51,.14); color:var(--red);
+  }
+  .feat.b .ico{background:rgba(30,155,215,.14); color:var(--blue);}
+  .feat.g .ico{background:rgba(52,199,89,.14); color:var(--green);}
+  .feat h3{margin:0 0 6px; font-size:17px;}
+  .feat p{margin:0; font-size:15px; color:var(--dim); line-height:1.6;}
+
+  .shot{
+    background:rgba(255,255,255,.03); border:1px dashed var(--panel-border);
+    border-radius:14px; padding:48px 20px; text-align:center; color:var(--dim);
+    margin:24px 0; font-size:15px;
+  }
+  .shot .ico{font-size:30px; display:block; margin-bottom:10px; color:var(--blue); opacity:.7;}
+  .shot small{display:block; margin-top:6px; color:#5d6873; font-size:13px;}
+
+  .badge{
+    display:inline-block; font-size:12.5px; padding:3px 11px; border-radius:20px;
+    background:rgba(52,199,89,.14); color:var(--green); font-weight:600;
+    letter-spacing:.3px; margin-bottom:14px;
+  }
+  .badge.warn{background:rgba(30,155,215,.14); color:var(--blue);}
+
+  .cta-row{display:flex; flex-wrap:wrap; gap:14px; margin:30px 0;}
+  .btn{
+    display:inline-flex; align-items:center; gap:9px; padding:13px 22px;
+    border-radius:12px; font-weight:600; font-size:16px; transition:transform .12s ease,filter .12s ease;
+  }
+  .btn:hover{text-decoration:none; transform:translateY(-1px); filter:brightness(1.08);}
+  .btn-primary{background:var(--red); color:#fff;}
+  .btn-ghost{background:var(--panel); color:var(--text); border:1px solid var(--panel-border);}
+  .btn .ico{font-size:18px; line-height:1;}
+
+  .faq details{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:13px;
+    padding:0 22px; margin-bottom:12px; backdrop-filter:blur(12px);
+  }
+  .faq summary{
+    cursor:pointer; padding:18px 0; font-weight:600; font-size:17px; list-style:none;
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
+  }
+  .faq summary::-webkit-details-marker{display:none;}
+  .faq summary .chev{color:var(--red); transition:transform .2s ease; flex-shrink:0;}
+  .faq details[open] summary .chev{transform:rotate(45deg);}
+  .faq details p{margin:0 0 18px; color:var(--dim); font-size:16px;}
+
+  footer.site{
+    border-top:1px solid var(--panel-border); margin-top:50px; padding:34px 0 46px;
+    color:var(--dim); font-size:14px; line-height:1.7;
+  }
+  footer.site .disc{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:13px;
+    padding:18px 22px; margin-bottom:20px;
+  }
+  footer.site a{color:var(--blue);}
+  .foot-meta{display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px;}
+
+  @media (max-width:560px){
+    body{font-size:16px;}
+    .hero{padding:38px 0 20px;}
+    .panel,.feat{padding:18px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <span class="brand">aslan4u<span class="dot">.</span>de</span>
+    <nav class="nav">
+      <a href="../index.html">Start</a>
+      <a href="/fritztrack4u">FritzTrack4u</a>
+      <a href="https://github.com/Aslan4u73/FritzTrack4u">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap read">
+    <span class="kicker">Smart Home &middot; Open Source</span>
+    <h1>Wer ist gerade zu Hause? Raum- und Etagen-Erkennung mit der FritzBox</h1>
+    <p class="sub">Anwesenheit, Raum, Etage und Gaeste-Erkennung im eigenen Zuhause &ndash; nur mit dem WLAN, das schon da ist. Ehrlich erklaert, ohne Marketing-Maerchen.</p>
+  </div>
+</div>
+
+<div class="wrap read">
+<article>
+
+  <div class="panel lead">
+    <p style="margin:0;"><strong>Kurz vorweg, damit keine falsche Erwartung entsteht:</strong> Das hier ist kein Roentgenblick und kein Spionage-Tool. Es funktioniert <strong>nur fuer dein eigenes Zuhause</strong> und nur fuer Geraete, die in <strong>deinem eigenen WLAN</strong> angemeldet sind. Es ist <strong>raum-grob</strong> nach einer Kalibrierung &ndash; also "Kueche / Erdgeschoss", nicht "30 cm neben dem Herd". Wer cm-genaue GPS-Ortung erwartet, ist hier falsch. Wer wissen will, ob die Kinder oben sind, das Wohnzimmer leer ist oder ein fremdes Handy im Netz haengt &ndash; genau dafuer ist es gebaut.</p>
+  </div>
+
+  <p>Die meisten Smart-Home-Systeme wissen nur eines: <em>jemand ist zuhause</em> oder <em>niemand ist zuhause</em>. Das ist ein binärer Schalter und reicht fuer simple Automationen. Aber sobald du fragst <strong>"wer ist zuhause"</strong> und vor allem <strong>"wo im Haus"</strong>, hoert es bei den meisten Loesungen auf. Genau diese Luecke schliesst dieses Projekt &ndash; mit der FritzBox, die in Millionen deutschen Haushalten ohnehin steht.</p>
+
+  <p>Die Idee dahinter ist bodenstaendig: Jedes Smartphone, das mit dem WLAN verbunden ist, meldet sich an einer FritzBox oder einem FritzRepeater an &ndash; mit einer messbaren Signalstaerke (dBm). Steht in jeder Etage und idealerweise in mehreren Raeumen ein WLAN-Geraet, ergibt sich aus diesen Signalstaerken ein Muster. Nach einer <strong>Kalibrierung pro Raum</strong> ordnet Home Assistant ein Handy dem wahrscheinlichsten Raum und der wahrscheinlichsten Etage zu. Kein zusaetzlicher Sensor, kein Bluetooth-Beacon, keine App auf jedem Geraet.</p>
+
+  <h2>Was das System wirklich kann (Raumerkennung in Home Assistant)</h2>
+
+  <p>Vier Faehigkeiten machen den Unterschied zum simplen "anwesend / abwesend"-Schalter aus. Ehrlich gesagt: nicht jede ist gleich praezise &ndash; aber jede ist nuetzlich.</p>
+
+  <div class="features">
+    <div class="feat">
+      <div class="ico">&#9679;</div>
+      <h3>Raum-Erkennung</h3>
+      <p>Nach Kalibrierung ordnet das System ein Handy dem wahrscheinlichsten Raum zu. Raum-grob, nicht zentimeter-genau.</p>
+    </div>
+    <div class="feat b">
+      <div class="ico">&#9650;</div>
+      <h3>Etage erkennen</h3>
+      <p>Stockwerke unterscheiden sich im Signal staerker als Nachbarraeume &ndash; die Etagen-Erkennung ist oft die zuverlaessigste Schicht.</p>
+    </div>
+    <div class="feat g">
+      <div class="ico">&#10003;</div>
+      <h3>Anwesenheit pro Person</h3>
+      <p>Nicht nur "jemand da", sondern welches bekannte Geraet &ndash; und damit welche Person &ndash; gerade im Haus ist.</p>
+    </div>
+    <div class="feat">
+      <div class="ico">&#9888;</div>
+      <h3>Gaeste- &amp; Fremd-Geraet-Erkennung</h3>
+      <p>Taucht ein unbekanntes Handy im eigenen WLAN auf, gibt es einen Sicherheits-Hinweis &ndash; so erkennst du fremde Geraete im eigenen Netz.</p>
+    </div>
+  </div>
+
+  <p>Der praktische Nutzen ergibt sich aus der Kombination: Licht im Flur nur, wenn wirklich jemand auf der Etage ist. Heizung im Buero hoch, sobald dein Handy dort gemessen wird. Eine stille Benachrichtigung, wenn ein <strong>fremdes Geraet im WLAN</strong> auftaucht, waehrend niemand Besuch angekuendigt hat. Das alles laeuft lokal in Home Assistant &ndash; keine Cloud, keine fremden Server.</p>
+
+  <div class="shot">
+    <span class="ico">&#9636;</span>
+    Screenshot-Platzhalter: Home-Assistant-Dashboard mit Raum- &amp; Etagen-Anzeige pro Bewohner
+    <small>(hier spaeter echtes Dashboard-Bild einsetzen)</small>
+  </div>
+
+  <h2>Der ehrliche Teil: Was es NICHT kann</h2>
+
+  <p>Ich verkaufe hier keine Praezision, die WLAN-Signalstaerke physikalisch nicht hergibt. Das gehoert auf den Tisch, bevor du Zeit investierst:</p>
+
+  <div class="panel limit">
+    <span class="badge warn">Ehrliche Grenzen</span>
+    <h3>Wo die Technik aufhoert</h3>
+    <ul>
+      <li><strong>Raum-grob, kein cm-GPS.</strong> Du bekommst "Wohnzimmer", nicht "links neben dem Sofa". Fuer raumbasierte Automationen reicht das &ndash; fuer Indoor-Navigation nicht.</li>
+      <li><strong>Kalibrierung ist Pflicht.</strong> Ohne einmaliges Anlernen der Signalstaerke pro Raum gibt es nur Anwesenheit, keine Raum-Zuordnung. Je mehr Repeater, desto besser die Trennung.</li>
+      <li><strong>WLAN schwankt.</strong> Signalstaerke aendert sich durch Koerper im Raum, geschlossene Tueren, Mikrowellen, Wetter. Einzelne Fehl-Zuordnungen sind normal &ndash; das System glaettet, aber eliminiert sie nicht.</li>
+      <li><strong>Nur das eigene Zuhause.</strong> Es erkennt ausschliesslich Geraete im eigenen WLAN. Fremde, Nachbarn, Mitarbeiter oder Kunden zu orten ist <strong>nicht</strong> der Zweck &ndash; und je nach Lage rechtlich unzulaessig.</li>
+      <li><strong>Handy muss verbunden sein.</strong> Ist das Telefon im Flugmodus, aus oder mit Mobilfunk statt WLAN unterwegs, gibt es kein Signal &ndash; und damit keine Ortung.</li>
+    </ul>
+  </div>
+
+  <p>Wenn du nach echter zentimeter-genauer Indoor-Ortung suchst, ist der ehrliche Profi-Standard ein anderer: ESP32-basierte Bluetooth-Tracker (z. B. Bermuda) mit Geraeten in jedem Raum. Das ist genauer, aber teurer und aufwaendiger. Dieses Projekt geht bewusst den schlanken Weg: <strong>maximaler Nutzen aus der Hardware, die du schon hast.</strong></p>
+
+  <div class="shot">
+    <span class="ico">&#9636;</span>
+    Screenshot-Platzhalter: Kalibrier-Ansicht &ndash; Signalstaerke (dBm) pro Raum anlernen
+    <small>(hier spaeter echten Kalibrier-Screen einsetzen)</small>
+  </div>
+
+  <h2>Fuer wen ist das gedacht</h2>
+  <p>Fuer Leute mit einer FritzBox und Home Assistant, die ihr Zuhause smarter machen wollen, ohne neue Hardware zu kaufen. Fuer Familien, die wissen wollen, ob die Kinder oben im Zimmer sind. Fuer alle, die ein <strong>fremdes Geraet im WLAN erkennen</strong> und einen Sicherheits-Hinweis bekommen wollen. Und fuer Bastler, die ein sauberes Open-Source-Projekt zum Erweitern suchen.</p>
+
+  <p>Nicht gedacht ist es fuer Ueberwachung Dritter. Das Projekt ist absichtlich so gebaut, dass es nur im eigenen Netz mit den eigenen, bekannten Geraeten arbeitet. Das ist keine technische Huerde, die man umgeht &ndash; das ist die Grenze, die das Projekt setzt.</p>
+
+  <div class="cta-row">
+    <a class="btn btn-primary" href="https://github.com/Aslan4u73/FritzTrack4u">
+      <span class="ico">&#9733;</span> Projekt auf GitHub ansehen
+    </a>
+    <a class="btn btn-ghost" href="/fritztrack4u">
+      <span class="ico">&#8594;</span> Zur FritzTrack4u-Hauptseite
+    </a>
+  </div>
+
+  <h2 id="faq">Haeufige Fragen (FAQ)</h2>
+  <div class="faq">
+    <details>
+      <summary>Kann ich damit sehen, in welchem Raum jemand gerade ist? <span class="chev">&#43;</span></summary>
+      <p>Raum-grob ja, nach einer Kalibrierung. Das System lernt die WLAN-Signalstaerke (dBm) deiner FritzBox und Repeater pro Raum und ordnet ein Handy dem wahrscheinlichsten Raum zu. Es ist keine cm-genaue GPS-Ortung &ndash; WLAN-Signale schwanken. Erwarte "Wohnzimmer / Obergeschoss", nicht "links neben dem Sofa".</p>
+    </details>
+    <details>
+      <summary>Erkennt das System auch die Etage? <span class="chev">&#43;</span></summary>
+      <p>Ja, wenn pro Etage mindestens ein FritzBox-Geraet oder Repeater steht. Die Etagen-Erkennung funktioniert in der Praxis oft sogar zuverlaessiger als die Raum-Erkennung, weil sich die Signalstaerke zwischen Stockwerken staerker unterscheidet als zwischen Nachbarraeumen.</p>
+    </details>
+    <details>
+      <summary>Kann ich damit fremde Personen orten? <span class="chev">&#43;</span></summary>
+      <p>Nein. Das Projekt ist ausschliesslich fuer das eigene Zuhause und die eigenen Bewohner gedacht. Es erkennt nur Geraete, die in deinem eigenen WLAN angemeldet sind. Fremde, Mitarbeiter oder Kunden zu orten ist weder das Ziel noch technisch vorgesehen &ndash; und je nach Situation rechtlich unzulaessig.</p>
+    </details>
+    <details>
+      <summary>Wie erkenne ich ein fremdes Geraet in meinem WLAN? <span class="chev">&#43;</span></summary>
+      <p>Das System fuehrt eine Liste der bekannten Geraete deines Haushalts. Taucht ein unbekanntes Geraet in deinem WLAN auf, kann Home Assistant einen Sicherheits-Hinweis ausloesen. Das hilft, ungebetene Mitnutzer im eigenen Netz zu bemerken.</p>
+    </details>
+    <details>
+      <summary>Brauche ich teure Hardware? <span class="chev">&#43;</span></summary>
+      <p>Nein. Du brauchst eine FritzBox, optional FritzRepeater fuer mehr Genauigkeit, und eine Home-Assistant-Installation. Es werden keine extra Bluetooth-Beacons oder ESP32-Tracker benoetigt &ndash; das System nutzt das WLAN, das ohnehin schon da ist.</p>
+    </details>
+  </div>
+
+  <div class="cta-row">
+    <a class="btn btn-primary" href="https://github.com/Aslan4u73/FritzTrack4u">
+      <span class="ico">&#9733;</span> Jetzt auf GitHub starten
+    </a>
+    <a class="btn btn-ghost" href="../index.html">
+      <span class="ico">&#8594;</span> Zurueck zur Startseite
+    </a>
+  </div>
+
+</article>
+</div>
+
+<footer class="site">
+  <div class="wrap read">
+    <div class="disc">
+      <strong>Disclaimer:</strong> FRITZ! und FRITZ!Box sind eingetragene Marken der FRITZ! GmbH (vormals AVM). Dieses Projekt ist unabhaengig und nicht mit AVM/FRITZ! verbunden. Nutzung auf eigene Gefahr, keine Haftung. Nur fuer das eigene Zuhause und die eigenen Bewohner.
+    </div>
+    <div class="foot-meta">
+      <span>&copy; 2026 <a href="https://aslan4u.de">aslan4u.de</a> &middot; Open Source unter <a href="https://github.com/Aslan4u73/FritzTrack4u">FritzTrack4u</a></span>
+      <span><a href="https://aslan4u.de">aslan4u.de</a></span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
