@@ -1,261 +1,603 @@
-# FritzTrack4U
+<!--
+  ███████╗██████╗ ██╗████████╗███████╗████████╗██████╗  █████╗  ██████╗██╗  ██╗██╗  ██╗██╗   ██╗
+  ██╔════╝██╔══██╗██║╚══██╔══╝╚══███╔╝╚══██╔══╝██╔══██╗██╔══██╗██╔════╝██║ ██╔╝██║  ██║██║   ██║
+  █████╗  ██████╔╝██║   ██║     ███╔╝    ██║   ██████╔╝███████║██║     █████╔╝ ███████║██║   ██║
+  ██╔══╝  ██╔══██╗██║   ██║    ███╔╝     ██║   ██╔══██╗██╔══██║██║     ██╔═██╗ ╚════██║██║   ██║
+  ██║     ██║  ██║██║   ██║   ███████╗   ██║   ██║  ██║██║  ██║╚██████╗██║  ██╗     ██║╚██████╔╝
+  ╚═╝     ╚═╝  ╚═╝╚═╝   ╚═╝   ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝     ╚═╝ ╚═════╝
+-->
 
-**Indoor-Ortung mit den FritzBoxen, die du schon hast — kein ESP32, keine Beacons, keine Zusatz-Hardware.**
-**Indoor positioning that runs on the FritzBoxes you already own — no ESP32, no beacons, no extra hardware.**
+<div align="center">
 
-![status](https://img.shields.io/badge/status-active-success)
-![version](https://img.shields.io/badge/version-6.1-blue)
-![python](https://img.shields.io/badge/python-3.8%2B-blue)
-![license](https://img.shields.io/badge/license-MIT-green)
-![home%20assistant](https://img.shields.io/badge/Home%20Assistant-MQTT-41BDF5)
+```
+        FritzTrack4U  ·  Indoor-Ortung mit der Hardware, die du schon hast
+  ┌───────────────────────────────────────────────────────────────────────────┐
+  │   ╔═════════╗   2.OG · Buero          (•)Box D        [ • Murat ]           │
+  │   ║ ▓▓▓▓▓▓▓ ║───────────────────────────────────────────────────           │
+  │   ║ ▓▓▓▓▓▓▓ ║   1.OG · SARA           (•)Box C        [ • Sevda ]           │
+  │   ║ ▓▓▓▓▓▓▓ ║───────────────────────────────────────────────────           │
+  │   ║ ▓▓▓▓▓▓▓ ║   EG  · Kaminraum       (•)Box B        [ • Furkan]           │
+  │   ║ ▓▓▓▓▓▓▓ ║───────────────────────────────────────────────────           │
+  │   ║ ▓▓▓▓▓▓▓ ║   KG  · Keller          (•)Box A  ◀MASTER                     │
+  │   ╚═════════╝                                                               │
+  │                  ((  ·  ))  ein Handy  →  vier gleichzeitige Messungen      │
+  │              {A:80%  B:40%  C:15%  D:5%}  →  Raum: Kaminraum                │
+  └───────────────────────────────────────────────────────────────────────────┘
+```
 
-> Teil der **4U**-Projektfamilie — neben TA4U, FB4U, ASSIST4U, MC4U und WA4U.
-> Part of the **4U** project family.
+# 📡 FritzTrack4U
 
-**🇩🇪 [Deutsch](#-deutsch)  ·  🇬🇧 [English](#-english)  ·  📖 [Installation (DE)](docs/INSTALL.de.md)**
+**Raumgenaue Indoor-Ortung per WLAN — mit den FritzBox-Routern, die ohnehin an der Wand haengen.**
+**Room-level indoor positioning over Wi-Fi — using only the routers you already own.**
+**Sahip oldugun WLAN router'lariyla, ev ici oda-bazli konum tespiti.**
+
+[![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-MQTT%20Auto--Discovery-1E9BD7?logo=homeassistant&logoColor=white)](https://www.home-assistant.io/)
+[![Extra Hardware](https://img.shields.io/badge/extra%20hardware-0%20%E2%82%AC-34C759)](#-vergleich--vs-esp32)
+[![License: MIT](https://img.shields.io/badge/License-MIT-9AA4B2)](#-lizenz--license--lisans)
+[![made with](https://img.shields.io/badge/made%20with-stubbornness-E62E33)](#-die-geschichte--the-story--hikaye)
+
+**🌍 Sprache / Language / Dil:**  &nbsp; **[🇩🇪 Deutsch](#-deutsch)** &nbsp;·&nbsp; **[🇬🇧 English](#-english)** &nbsp;·&nbsp; **[🇹🇷 Tuerkce](#-turkce)**
+
+</div>
+
+> ⚖️ **Trademark / Marken-Hinweis**
+> **DE —** FRITZ! und FRITZ!Box sind eingetragene Marken der FRITZ! GmbH (vormals AVM GmbH). Dieses Projekt ist ein unabhaengiges, von der Community entwickeltes Werkzeug und steht in keiner Verbindung zu FRITZ!/AVM. Produktnamen werden ausschliesslich zu Identifikationszwecken genannt, um die Kompatibilitaet zu beschreiben.
+> **EN —** FRITZ! and FRITZ!Box are registered trademarks of FRITZ! GmbH (formerly AVM GmbH). This project is an independent, community-developed tool, neither affiliated with, authorized, sponsored nor endorsed by FRITZ!/AVM. Product names are used for identification purposes only to describe compatibility.
+
+<div align="center">
+
+<!-- TODO: Murat liefert -->
+<!-- ![FritzTrack4U Live-Demo](docs/images/demo.gif) -->
+> 🎬 **Demo-GIF folgt** · `docs/images/demo.gif` — *vier Etagen, Live-Punkte pro Person, ohne dass jemand eine App oeffnet.*
+
+</div>
 
 ---
----
 
-# 🇩🇪 Deutsch
+<a name="-deutsch"></a>
+## 🇩🇪 Deutsch
 
-## Worum geht es?
+> Raumgenaue Ortung im ganzen Haus — **nur mit den FritzBoxen, die ohnehin an der Wand haengen.** Keine Zusatz-Hardware. Kein ESP32. Keine API-Keys. Ein bis viele AVM-Router, TR-064 und die Sturheit, nicht zu glauben dass es nicht geht.
 
-Jeder "weiß", dass eine FritzBox kein Indoor-Tracking kann. Also klebt die ganze Bastler-Welt ESP32-Boards an die Wand, flasht ESPHome und pflegt ein Netz aus gelöteten Sensoren — nur um eine Frage zu beantworten: *In welchem Raum ist mein Handy gerade?*
+### 🧭 Das Kern-Prinzip — warum das funktioniert
 
-Was dabei übersehen wird:
+GPS funktioniert draussen perfekt und drinnen gar nicht. Genau im Haus willst du aber wissen, wer wo ist. FritzTrack4U loest das mit einem einzigen Gedanken:
 
-Deine FritzBoxen und Repeater **messen genau das schon längst.** Jede Box meldet die Signalstärke jedes verbundenen WLAN-Geräts. Wenn dein Handy durch die Wohnung läuft, sieht es die **Büro**-Box mit 35 % und die **Schlafzimmer**-Box gleichzeitig mit 10 %.
+> **Jede FritzBox misst dasselbe Handy GLEICHZEITIG — mit ihrer eigenen Signalstaerke.**
 
-```
-Handy "Pixel-9" → { Büro: 35%, Schlafzimmer: 10%, Küche: 4% }
-```
+Ein Handy in einem Raum erzeugt nicht *einen* Wert, sondern einen **Vektor** ueber alle Boxen. Die staerkste Box verraet die **Etage**. Der **volle Vektor** verraet den **Raum**. Und der Vergleich laeuft gegen kalibrierte Raum-Fingerprints — ueber **alle** Boxen, nicht nur die staerkste.
 
-Dieser Vektor **ist** eine Triangulation. Die stärkste Box sagt dir die Etage, der volle Fingerabdruck den Raum. **Keine Zusatz-Hardware. Kein Löten. Kein ESP32.**
-
-Und es wird besser, je mehr Geräte du hast: Jede FritzBox und jeder Repeater ist ein weiterer Sensor im Raster. Die Hardware hängt schon an deinen Wänden — FritzTrack4U liest sie nur aus.
-
-## Funktionen
-
-| | |
-|---|---|
-| **Multi-Box-Triangulation** | Ein Handy von mehreren Boxen gleichzeitig gesehen → ein echter Signal-Vektor statt einer einzigen Schätzung |
-| **Anwesenheits-Erkennung** | Keine Box sieht das Handy → **Abwesend**. Automatisch, sofort |
-| **Gäste-Erkennung** | Erkennt unbekannte Geräte + Ausschluss-Liste, damit deine eigenen Geräte (TV, Drucker…) nicht als Gast zählen |
-| **Raum-Fingerprinting** | Vergleicht den Live-Vektor mit eingelernten Raum-Signaturen (15 % Toleranz) |
-| **Home Assistant** | MQTT-Auto-Discovery — Sensoren tauchen von selbst in HA auf |
-| **SQLite-Verlauf** | Bewegungsverlauf in einer lokalen Datenbank, automatisches Aufräumen nach 60 Tagen |
-| **Adaptiver Takt** | 60 s normal · 15 s bei Bewegung · 300 s in Ruhe · 3 s Live — schont den Router, bleibt scharf wenn nötig |
-| **Skaliert 1..N** | Läuft mit einer einzigen Box; wird mit jeder weiteren Box/jedem Repeater genauer |
-
-## Wie es funktioniert
-
-```
-┌─────────────┐   TR-064 Login      ┌──────────────┐
-│  FritzBox 1 │◀── (pro Box) ──────│              │
-├─────────────┤                     │ FritzTrack4U │
-│  FritzBox 2 │◀───────────────────│   Daemon     │
-├─────────────┤                     │              │
-│  Repeater 3 │◀───────────────────│              │
-└─────────────┘                     └──────┬───────┘
-                                            │
-   jede Box liefert: Gerät + Signalstärke %
-                                            ▼
-                          { Büro:35%, Schlafzimmer:10%, ... }
-                                            │
-                          stärkste Box → Etage
-                          Fingerprint-Treffer → Raum
-                                            ▼
-                            SQLite-Verlauf  +  MQTT → Home Assistant
+```mermaid
+flowchart LR
+    P(("📱 Ein Handy<br/>im Kaminraum"))
+    P -. "stark" .-> B1["📡 Box A<br/>80%"]
+    P -. "mittel" .-> B2["📡 Box B<br/>40%"]
+    P -. "schwach" .-> B3["📡 Box C<br/>15%"]
+    P -. "kaum" .-> B4["📡 Box D<br/>5%"]
+    B1 --> V["🧮 Vektor<br/>{A:80, B:40,<br/>C:15, D:5}"]
+    B2 --> V
+    B3 --> V
+    B4 --> V
+    V --> M{{"Vergleich gegen<br/>Raum-Fingerprints<br/>(mittlere Abweichung<br/>ueber ALLE Boxen)"}}
+    M --> R(["🏠 Position:<br/>Kaminraum"])
 ```
 
-1. **TR-064-Login, pro Box.** Jede FritzBox bekommt ihren eigenen Login (MD5/UTF-16LE Challenge-Response). Genau diese eigene Sitzung pro Box schaltet die Signal-Daten frei, die das Netz sonst nicht herausgibt — **der Master allein reicht nicht.**
-2. **Signal-Vektor.** Pro Box werden alle verbundenen Geräte mit ihrer Signalstärke (%) über WLANConfiguration 1/2/3 (2,4 GHz / 5 GHz / Gast) gelesen. Daraus entsteht ein Vektor pro Handy: `{ Boxname: Signal% }`.
-3. **Position.** Die stärkste Box bestimmt die Etage, ein Fingerprint-Treffer (15 % Toleranz) den Raum. Sieht **keine** Box das Gerät → **Abwesend**.
+**Der Punkt:** Die Position kommt aus dem **vollen Vektor-Vergleich** (mean absolute deviation ueber alle Boxen), **nicht** aus der staerksten Box allein. Je mehr Boxen mithoeren, desto genauer wird die Ortung.
 
-## Schnellstart
+So wird aus einer einzelnen Box ein grober Etagen-Sensor — und aus mehreren Boxen ein raumgenaues Ortungssystem:
 
-**Voraussetzung:** Python 3.8+ (Linux / Raspberry Pi / Mini-Server)
+```
+   ┌─────────────────────────────────────────────────────────────────┐
+   │                                                                   │
+   │   📱  EIN Raum (z.B. Buero)                                        │
+   │       │                                                           │
+   │       ├──── 📡 Box 1  ▓▓▓▓▓▓▓▓░░  80%   ← stark, gleicher Raum    │
+   │       ├──── 📡 Box 2  ▓▓▓▓░░░░░░  40%   ← Nachbarraum             │
+   │       ├──── 📡 Box 3  ▓▓░░░░░░░░  15%   ← durch eine Wand         │
+   │       └──── 📡 Box 4  ▓░░░░░░░░░   5%   ← andere Etage            │
+   │                          │                                        │
+   │                          ▼                                        │
+   │              Vektor {80, 40, 15, 5}  ──►  RAUM: Buero ✅          │
+   │                                                                   │
+   │   Staerkste Box = ETAGE        Voller Vektor = RAUM               │
+   │   Keine Box sieht das Handy   = ABWESEND                          │
+   └─────────────────────────────────────────────────────────────────┘
+```
+
+### ✨ Features
+
+- 🏠 **Raumgenaue Ortung** ueber Multi-Box-Signalvektor + kalibrierte Fingerprints (mean absolute deviation ueber alle Boxen).
+- 🪜 **Etagen-Erkennung** ueber die staerkste Box — funktioniert schon ab **einer** Box.
+- 🚪 **Anwesenheit/Abwesenheit:** Sieht **keine** Box das Handy → die Person ist nicht zu Hause.
+- 👥 **Gaeste-Erkennung:** Unbekannte Geraete werden als Gast erkannt, nicht still ignoriert.
+- 🗄️ **SQLite-Verlauf** mit **60-Tage**-Auto-Cleanup — wer war wann in welchem Raum.
+- ⏱️ **Adaptiver Takt:** schnell bei Bewegung, sparsam bei Ruhe — schont die FritzBox.
+- 🔌 **Home Assistant** ueber **MQTT-Auto-Discovery** — pro Person ein Sensor, ohne Handarbeit.
+- 🧩 **Config-getrieben, 1 bis N Boxen:** funktioniert mit einer einzigen Box, skaliert auf beliebig viele.
+- 💸 **0 € Zusatz-Hardware. Keine API-Keys. Keine Cloud.**
+
+### 📈 Hardware-Skalierung — je mehr Boxen, desto genauer
+
+| Boxen | Was du bekommst | Genauigkeit |
+|:--:|---|---|
+| **1 Box** | Welche Box haengt das Handy? → grobe **Etage** | 🟡 etagen-grob |
+| **2–3 Boxen** | Erste Signalvektoren → **Raum** (mit Fingerprint) | 🟢 raumgenau |
+| **4+ Boxen** | Dichter Vektor → robuster Raum, Basis fuer Position **im** Raum | 🟢🟢 raumgenau + |
+
+> Faustregel: **Staerkste Box = Etage. Voller Vektor = Raum. Keine Box = abwesend.**
+
+### ⚔️ Vergleich — FritzTrack4U vs. ESP32-Bermuda
+
+Ehrlich bleiben: ESP32 ist der genauere Profi-Standard. FritzTrack4U gewinnt, wenn du **null Zusatz-Hardware** willst.
+
+| Kriterium | **FritzTrack4U** | **ESP32 Bermuda / ESPresense** |
+|---|---|---|
+| Hardware-Kosten | **0 €** (Boxen vorhanden) | ~5 € pro Chip, einer pro Raum |
+| Zusatz-Geraete im Haus | **keine** | viele (ein Chip je Raum) |
+| Genauigkeit | raumgrob → raumgenau (mit Vektor) | **raumgenau, <10 s** |
+| Reifegrad | Eigenbau, hier dokumentiert | **Profi-Standard** |
+| Einrichtung | 1 Router-User pro Box | Chips flashen + verteilen |
+| Stromverbrauch zusaetzlich | **0** (Boxen laufen eh) | gering, aber vielfach |
+| Wann gewinnt es | du willst **nichts dazukaufen** | du willst **maximale Genauigkeit** |
+
+> **Fazit:** Kein „besser als ESP32“ — sondern **umsonst und gut genug, mit Luft nach oben.**
+
+### 🚀 Schnellstart
 
 ```bash
-# 1. Abhängigkeit installieren (nur für Home Assistant nötig)
-pip install paho-mqtt
+git clone https://github.com/<dein-user>/FritzTrack4U.git
+cd FritzTrack4U
+pip install -r requirements.txt
 
-# 2. config.json aus der Vorlage anlegen
-cp config.example.json config.json
-nano config.json
+cp config.example.yaml config.yaml
+# config.yaml: pro Box IP + Benutzer + Etage eintragen, MQTT-Broker, Geraete
 
-# 3. Daemon starten
-python3 fritztrack4u.py --config ./config.json
+python fritztrack4u.py
 ```
 
-> **Wichtigster Schritt:** Auf **jeder** FritzBox/jedem Repeater einen eigenen Benutzer anlegen (Recht „FRITZ!Box Einstellungen“, nur Heimnetz). Erst dann liefert jede Box ihre eigenen Signalwerte. Die komplette deutsche Anleitung: **[docs/INSTALL.de.md](docs/INSTALL.de.md)**.
+**Pflicht-Schritt fuer Multi-Box (der eigentliche Trick):** Lege auf **jeder** FritzBox einen eigenen Benutzer mit dem Recht **„FRITZ!Box Einstellungen“** an. Nur dann liefert jede Box per TR-064 ihre eigene Signalstaerke. Fragst du nur den Master, bekommst du nur einen Wert — und damit keinen Vektor.
 
-Beispiel-`config.json`:
-
-```json
-{
-  "boxes": [
-    { "name": "Büro",        "ip": "192.168.178.1", "floor": "Erdgeschoss", "floor_nr": 0, "user": "DEIN_USER", "password": "DEIN_PASSWORT" },
-    { "name": "Schlafzimmer", "ip": "192.168.178.2", "floor": "Obergeschoss", "floor_nr": 1, "user": "DEIN_USER", "password": "DEIN_PASSWORT" }
-  ],
-  "devices": { "AA:BB:CC:DD:EE:FF": "Handy-Person-1" },
-  "exclude_names": ["SmartTV", "Drucker"],
-  "mqtt": { "enabled": true, "host": "192.168.178.50", "port": 1883, "user": "ha", "password": "..." },
-  "retention_days": 60
-}
+```yaml
+# config.example.yaml (Auszug)
+boxes:
+  - name: "Box A"      # Master
+    host: "192.168.x.1"
+    user: "tracker"
+    floor: 0
+  - name: "Box B"
+    host: "192.168.x.2"
+    user: "tracker"
+    floor: 1
+  # ... 1 bis N Boxen
+mqtt:
+  host: "192.168.x.y"
+  port: 1883
+poll:
+  normal_seconds: 300
+  live_seconds: 3
+history:
+  retention_days: 60
 ```
 
-Alle Optionen (Fingerprints, Intervalle, Zugangsdaten pro Box) stehen in [`config.example.json`](config.example.json).
+### 🛠️ Wie es technisch laeuft
 
-> **Sicherheit:** Deine echte `config.json` enthält Passwörter und dein Wohnungs-Layout. Sie ist per `.gitignore` ausgeschlossen — **niemals** committen.
+```
+   N x FritzBox (Mesh)              Host (Mini-Server, LAN-only)        Home Assistant
+   ┌──────────────┐                 ┌──────────────────────────┐       ┌──────────────┐
+   │ Box A (Master)│  TR-064 / 49000 │  fritztrack4u.py         │  MQTT │  Sensor je    │
+   │ Box B        │◄───────────────►│  - Login pro Box (SID)   │──────►│  Person       │
+   │ Box C        │                 │  - SignalStrength % je Box│ 1883 │  Anwesenheit  │
+   │ Box D        │                 │  - Vektor + Fingerprint   │       │  + Live-Btn   │
+   └──────────────┘                 │  - SQLite 60-Tage-Verlauf │       │  + (3D-Viz)   │
+                                     └──────────────────────────┘       └──────────────┘
+```
 
-## Hardware-Skalierung
+- **Login:** AVM-Challenge-Response (MD5 ueber **UTF-16LE** — der Stolperstein), SID wird ~900 s wiederverwendet, um die Box zu schonen.
+- **Datenquelle:** TR-064 `GetGenericAssociatedDeviceInfo` pro Box → `SignalStrength` (%) je Handy.
+- **Vektor:** alle Box-Werte pro Handy einsammeln → `[Box A%, Box B%, …]`.
+- **Match:** `best_room()` vergleicht den Vektor gegen kalibrierte Raum-Fingerprints (mittlere Abweichung ueber alle Boxen).
+- **Haertung:** Retries + Pausen gegen FritzBox-Ueberlast, grosse Normal-Intervalle als Schutz.
 
-Je mehr FritzBoxen und Repeater im Mesh, desto feiner die Auflösung. Nichts zu kaufen — es skaliert mit dem, was du schon hast.
-
-| Boxen / Repeater | Auflösung | Was du bekommst |
-|---|---|---|
-| **1** | Etagen-grob | „Zu Hause / Abwesend“ + welche Etage |
-| **2–3** | Raum-genau | In welchem Raum das Handy ist |
-| **4+** | Im-Raum | Position innerhalb des Raums über reichere Signal-Vektoren |
-
-## Home Assistant
-
-FritzTrack4U meldet sich per **MQTT Auto-Discovery** selbst an — Daemon mit MQTT starten, und die Entitäten erscheinen von allein in Home Assistant. Kein YAML von Hand.
-
-Pro getracktem Handy bekommst du:
-- einen **Anwesenheits**-Sensor (Zu Hause / Abwesend)
-- einen **Raum**-Sensor (aktueller Raum aus dem Fingerprint-Treffer)
-- einen **Etagen**-Sensor (aus der stärksten Box)
-
-Dazu einen **Gäste**-Sensor, der anspringt, wenn ein unbekanntes Gerät auftaucht. Alles direkt in HA-Automationen nutzbar — Licht, Heizung, Benachrichtigungen.
-
-## Roadmap
-
-- [ ] **HA Custom Component** — native Integration statt nur MQTT
-- [ ] **3D-Visualisierung** — Live-Etagen-Ansicht der georteten Geräte
-- [ ] **Licht-Automation** — „Follow-me“-Licht, das auf Raumwechsel reagiert
-- [ ] **Fingerprint-Trainer** — geführtes Einlernen der Raum-Signaturen per Klick (aktuell trägt man Fingerprints manuell in die Config ein)
-- [ ] **Standby-Puffer** — kurze WLAN-Standby-Phasen von iPhones überbrücken, bevor „Abwesend“ gemeldet wird
-
-## Mitmachen
-
-Issues und Pull Requests willkommen. Der Daemon ist bewusst klein — eine Datei, eine Abhängigkeit. Wer einen Box-Hersteller, einen Sensor-Typ oder eine Fingerprint-Heuristik ergänzt: bitte diese Einfachheit erhalten. Für Änderungen an der `config.json`-Struktur bitte zuerst ein Issue öffnen.
+<!-- TODO: Murat liefert -->
+<!-- ![3D-Roentgenhaus](docs/images/3d-haus.png) -->
+> 🖼️ **Screenshots folgen** · `docs/images/3d-haus.png`, `docs/images/ha-sensoren.png`
 
 ---
+
+<a name="-die-geschichte--the-story--hikaye"></a>
+### 🔥 Die Geschichte — wie aus „unmoeglich“ ein Beweis wurde
+
+Diese README dokumentiert die Reise ehrlich, inklusive aller Sackgassen. Es gab keinen genialen Trick — es gab Sturheit.
+
+1. **Der erste Konsens:** „FritzBox kann kein Indoor-Tracking, eine Box meldet pro Handy nur **einen** Wert — alle nehmen ESP32.“ Klingt fundiert. War unvollstaendig.
+2. **Mesh-Sticking entdeckt:** Ein Handy klebt an einer alten Box, obwohl die Person laengst weg ist. „An welcher Box haengt es“ ≠ „wo ist die Person“. Erster Beweis, dass die naive Annahme falsch ist.
+3. **~12 API-Wege ueber 3 Test-Runden:** viele Sackgassen — `edit_device` (1 Wert), `meshlist.lua` (404), `meshTopo` (Daten, aber **keine** rssi-Felder), homeNet/meshNet (kein dBm). Jeder Weg ehrlich getestet, nicht „gefuehlt“ verworfen.
+4. **Dreimal „unmoeglich“ — dreimal widersprochen:** Die KI erklaerte drei Mal selbstbewusst „Triangulieren mit FritzBox geht nicht“. Murat widersprach jedes Mal — auf Basis **Physik**: Nachbarboxen *hoeren* das Handy schwach durch die Waende (genau das nutzt die FritzBox intern fuers Mesh-Steering). Er hatte jedes Mal recht.
+5. **💥 Der Durchbruch:** Nicht nur den Master fragen — **eigener Login PRO Box.** Dann liefert TR-064 `GetGenericAssociatedDeviceInfo` pro Box den `SignalStrength`. **Bewiesen:** dasselbe Handy gleichzeitig von zwei Boxen — `{Buero 35%, SARA 10%}`. Eine echte 2er-Gruppe, ueber die zweite Box schwaecher, weil eine Wand dazwischen ist.
+6. **Anwesenheits-Bug gefunden & gefixt:** Ein offline gegangenes Handy klebte auf dem alten Raum — jetzt gilt: keine Box sieht das Handy = abwesend.
+7. **iPhone-Standby-Falle:** iPhones verschwinden im Standby kurz aus der Assoziationsliste, ohne den Raum zu verlassen. Loesung: 2-Minuten-Puffer, bevor ein Raum als „verlassen“ gilt.
+
+**Der Strategie-Wechsel, der alles drehte:** weg von *„eine Box abfragen“* hin zu *„Multi-Box-Datensammler“*. Aus einer Momentaufnahme wurde ein dynamisches Ortungssystem. **Murat hatte bei allem recht.**
+
+> Die Lektion: Dreimal „geht nicht“ ist kein Beweis, dass es nicht geht. Frag **alle** Knoten, nicht nur den naechstliegenden.
+
 ---
 
-# 🇬🇧 English
+<a name="-changelog"></a>
+### 📜 Changelog
 
-## Why?
-
-Everyone "knows" a FritzBox can't do indoor tracking. So the whole hobbyist world glues ESP32 boards to walls, flashes ESPHome, and babysits a mesh of soldered sensors just to answer one question: *which room is my phone in?*
-
-Here's the thing they missed.
-
-Your FritzBoxes and repeaters are **already** measuring exactly that. Every box reports the signal strength of every Wi-Fi device associated with it. So when your phone walks through the apartment, the **Office** box sees it at 35% and the **Bedroom** box sees it at 10% — **at the same moment**.
-
-```
-phone "Pixel-9" → { Office: 35%, Bedroom: 10%, Kitchen: 4% }
-```
-
-That vector is a triangulation. Strongest box tells you the floor; the full fingerprint tells you the room. **No extra hardware. No soldering. No ESP32.**
-
-And it gets better the more gear you have: every FritzBox or repeater you add is one more sensor in the grid. The hardware is already on your walls — FritzTrack4U just reads it.
-
-## Features
-
-| | |
+| Version | Was dazukam |
 |---|---|
-| **Multi-box triangulation** | One phone seen by several boxes at once → a real signal vector, not a single guess |
-| **Presence detection** | No box sees the phone → marked **Away**. Automatic, instant |
-| **Guest detection** | Spots unknown devices + an exclude name-list so your own gear (TV, printer…) never trips it |
-| **Room fingerprinting** | Matches the live vector against learned room signatures (15% tolerance) |
-| **Home Assistant** | MQTT auto-discovery — sensors appear in HA by themselves |
-| **SQLite history** | Movement history in a local database, automatic 60-day cleanup |
-| **Adaptive polling** | 60s normal · 15s on movement · 300s at rest · 3s live — saves the router, stays sharp when it matters |
-| **Scales 1..N** | Works with a single box; gets sharper with every box and repeater you add |
+| **v1** | Eine Box, nur grobe **Etage** („an welcher Box haengt das Handy“). |
+| **v5** | **Fingerprint-Kalibrierung pro Raum** — 1 Box + dBm, erste Raum-Genauigkeit. |
+| **v6** | **Multi-Box-Datensammler:** alle Boxen einzeln per TR-064, Anwesenheits-Check (offline = abwesend), **SQLite-Verlauf**, adaptiver Takt. |
+| **v6.1** | **Gaeste-Erkennung** + **60-Tage-Auto-Cleanup**. |
+| **FritzTrack4U (public)** | Config-getrieben **1–N Boxen**, anonymisiert, **voller-Vektor-Match ueber alle Boxen**. |
 
-## How it works
+---
+
+<a name="-english"></a>
+## 🇬🇧 English
+
+> Room-level positioning for a whole house — **using only the FritzBoxes already on your walls.** No extra hardware. No ESP32. No API keys. One to many AVM routers, TR-064, and the stubbornness to not believe it can't be done.
+
+### 🧭 The Core Principle — why this works
+
+GPS works perfectly outdoors and not at all indoors. Yet indoors is exactly where you want to know who is where. FritzTrack4U solves it with a single idea:
+
+> **Every FritzBox measures the same phone SIMULTANEOUSLY — each with its own signal strength.**
+
+A phone in a room produces not *one* value but a **vector** across all boxes. The strongest box reveals the **floor**. The **full vector** reveals the **room**. The match runs against calibrated room fingerprints — across **all** boxes, not just the strongest one.
+
+```mermaid
+flowchart LR
+    P(("📱 One phone<br/>in the den"))
+    P -. "strong" .-> B1["📡 Box A<br/>80%"]
+    P -. "medium" .-> B2["📡 Box B<br/>40%"]
+    P -. "weak" .-> B3["📡 Box C<br/>15%"]
+    P -. "faint" .-> B4["📡 Box D<br/>5%"]
+    B1 --> V["🧮 Vector<br/>{A:80, B:40,<br/>C:15, D:5}"]
+    B2 --> V
+    B3 --> V
+    B4 --> V
+    V --> M{{"Match vs.<br/>room fingerprints<br/>(mean absolute deviation<br/>over ALL boxes)"}}
+    M --> R(["🏠 Position:<br/>the den"])
+```
+
+**The point:** position comes from the **full vector comparison** (mean absolute deviation over all boxes), **not** from the strongest box alone. The more boxes listen, the more accurate it gets.
 
 ```
-┌─────────────┐   TR-064 login      ┌──────────────┐
-│  FritzBox 1 │◀── (per box) ──────│              │
-├─────────────┤                     │ FritzTrack4U │
-│  FritzBox 2 │◀───────────────────│   daemon     │
-├─────────────┤                     │              │
-│  Repeater 3 │◀───────────────────│              │
-└─────────────┘                     └──────┬───────┘
-                                            │
-   each box returns: device + SignalStrength%
-                                            ▼
-                          { Office:35%, Bedroom:10%, ... }
-                                            │
-                          strongest box → floor
-                          fingerprint match → room
-                                            ▼
-                            SQLite history  +  MQTT → Home Assistant
+   ┌─────────────────────────────────────────────────────────────────┐
+   │   📱  ONE room (e.g. the office)                                   │
+   │       │                                                           │
+   │       ├──── 📡 Box 1  ▓▓▓▓▓▓▓▓░░  80%   ← strong, same room       │
+   │       ├──── 📡 Box 2  ▓▓▓▓░░░░░░  40%   ← next room               │
+   │       ├──── 📡 Box 3  ▓▓░░░░░░░░  15%   ← through a wall          │
+   │       └──── 📡 Box 4  ▓░░░░░░░░░   5%   ← other floor             │
+   │                          ▼                                        │
+   │              Vector {80, 40, 15, 5}  ──►  ROOM: office ✅         │
+   │                                                                   │
+   │   Strongest box = FLOOR        Full vector = ROOM                 │
+   │   No box sees the phone       = AWAY                              │
+   └─────────────────────────────────────────────────────────────────┘
 ```
 
-1. **TR-064 login, per box.** Each FritzBox gets its own MD5 / UTF-16LE challenge-response login. That dedicated per-box session is what unlocks the signal data the network won't give you otherwise — **the master box alone is not enough.**
-2. **Signal vector.** Per box, every associated device and its `SignalStrength%` is read across `WLANConfiguration` 1/2/3 (2.4 GHz / 5 GHz / guest). This builds one vector per phone: `{ boxname: signal% }`.
-3. **Position.** Strongest box → floor, then a fingerprint match (15% tolerance) → room. If no box sees the device at all → **Away**.
+### ✨ Features
 
-## Quick Start
+- 🏠 **Room-level positioning** via multi-box signal vector + calibrated fingerprints (mean absolute deviation across all boxes).
+- 🪜 **Floor detection** from the strongest box — works with just **one** box.
+- 🚪 **Presence/absence:** if **no** box sees the phone → the person is away.
+- 👥 **Guest detection:** unknown devices are flagged as guests, not silently dropped.
+- 🗄️ **SQLite history** with **60-day** auto-cleanup — who was in which room, when.
+- ⏱️ **Adaptive polling:** fast on movement, gentle at rest — protects the FritzBox.
+- 🔌 **Home Assistant** via **MQTT auto-discovery** — one sensor per person, zero manual setup.
+- 🧩 **Config-driven, 1 to N boxes:** works with a single box, scales to as many as you like.
+- 💸 **€0 extra hardware. No API keys. No cloud.**
 
-**Requirements:** Python 3.8+ (Linux / Raspberry Pi / mini-server)
+### 📈 Hardware scaling — more boxes, more accuracy
+
+| Boxes | What you get | Accuracy |
+|:--:|---|---|
+| **1 box** | Which box is the phone on? → rough **floor** | 🟡 floor-level |
+| **2–3 boxes** | First signal vectors → **room** (with fingerprint) | 🟢 room-level |
+| **4+ boxes** | Dense vector → robust room, basis for position **within** a room | 🟢🟢 room-level + |
+
+> Rule of thumb: **Strongest box = floor. Full vector = room. No box = away.**
+
+### ⚔️ Comparison — FritzTrack4U vs. ESP32-Bermuda
+
+Let's be honest: ESP32 is the more accurate, professional standard. FritzTrack4U wins when you want **zero extra hardware**.
+
+| Criterion | **FritzTrack4U** | **ESP32 Bermuda / ESPresense** |
+|---|---|---|
+| Hardware cost | **€0** (boxes already there) | ~€5 per chip, one per room |
+| Extra devices in the house | **none** | many (one chip per room) |
+| Accuracy | coarse → room-level (with vector) | **room-level, <10 s** |
+| Maturity | DIY, documented here | **professional standard** |
+| Setup | 1 router user per box | flash + distribute chips |
+| Extra power draw | **0** (boxes run anyway) | low, but multiplied |
+| When it wins | you want to **buy nothing** | you want **max accuracy** |
+
+> **Bottom line:** not “better than ESP32” — but **free and good enough, with room to grow.**
+
+### 🚀 Quick start
 
 ```bash
-# 1. Install the dependency (only needed for Home Assistant)
-pip install paho-mqtt
+git clone https://github.com/<your-user>/FritzTrack4U.git
+cd FritzTrack4U
+pip install -r requirements.txt
 
-# 2. Create config.json from the template
-cp config.example.json config.json
-nano config.json
+cp config.example.yaml config.yaml
+# config.yaml: per box IP + user + floor, MQTT broker, devices
 
-# 3. Run the daemon
-python3 fritztrack4u.py --config ./config.json
+python fritztrack4u.py
 ```
 
-> **Most important step:** create a dedicated user on **each** FritzBox/repeater ("FRITZ!Box settings" permission, home-network only). Only then does each box report its own signal values. Full setup guide (German): **[docs/INSTALL.de.md](docs/INSTALL.de.md)**.
+**Required for multi-box (the actual trick):** create a dedicated user with the **“FRITZ!Box settings”** permission on **every** box. Only then does each box return its own signal strength over TR-064. Query only the master and you get a single value — and therefore no vector.
 
-See [`config.example.json`](config.example.json) for all options (fingerprints, intervals, per-box credentials).
+```yaml
+# config.example.yaml (excerpt)
+boxes:
+  - name: "Box A"      # master
+    host: "192.168.x.1"
+    user: "tracker"
+    floor: 0
+  - name: "Box B"
+    host: "192.168.x.2"
+    user: "tracker"
+    floor: 1
+  # ... 1 to N boxes
+mqtt:
+  host: "192.168.x.y"
+  port: 1883
+poll:
+  normal_seconds: 300
+  live_seconds: 3
+history:
+  retention_days: 60
+```
 
-> **Security:** your real `config.json` holds passwords and your home layout. It's excluded via `.gitignore` — never commit it.
+### 🛠️ How it works
 
-## Hardware scaling
+```
+   N x FritzBox (mesh)              Host (mini-server, LAN-only)        Home Assistant
+   ┌──────────────┐                 ┌──────────────────────────┐       ┌──────────────┐
+   │ Box A (master)│  TR-064 / 49000 │  fritztrack4u.py         │  MQTT │  sensor per   │
+   │ Box B        │◄───────────────►│  - login per box (SID)   │──────►│  person       │
+   │ Box C        │                 │  - SignalStrength % / box │ 1883 │  presence     │
+   │ Box D        │                 │  - vector + fingerprint   │       │  + live btn   │
+   └──────────────┘                 │  - SQLite 60-day history  │       │  + (3D viz)   │
+                                     └──────────────────────────┘       └──────────────┘
+```
 
-The more FritzBoxes and repeaters in the mesh, the finer the resolution. Nothing to buy — it scales with the gear you already have.
-
-| Boxes / Repeaters | Resolution | What you get |
-|---|---|---|
-| **1** | Floor-level | "Home / Away" + which floor |
-| **2–3** | Room-level | Which room the phone is in |
-| **4+** | In-room | Sub-room position via richer signal vectors |
-
-## Home Assistant
-
-FritzTrack4U publishes over MQTT with **auto-discovery** — start the daemon with MQTT configured and the entities show up in Home Assistant on their own. No YAML to hand-write.
-
-Per tracked phone you get a **presence** sensor (Home/Away), a **room** sensor, and a **floor** sensor — plus a **guest** sensor that flips when an unknown device appears. Wire any of these into HA automations — lights, heating, notifications.
-
-## Roadmap
-
-- [ ] **HA custom component** — native integration instead of MQTT-only
-- [ ] **3D visualization** — live floor-plan view of tracked devices
-- [ ] **Light automation** — follow-me lighting that reacts to room changes
-- [ ] **Fingerprint trainer** — guided UI to record room signatures (currently fingerprints are entered manually in the config)
-- [ ] **Standby buffer** — bridge short iPhone Wi-Fi standby gaps before reporting "Away"
-
-## Contributing
-
-Issues and PRs welcome. The daemon is intentionally small — one file, one dependency. If you add a box vendor, a sensor type, or a fingerprint heuristic, keep that simplicity. Open an issue first for anything that changes the `config.json` shape.
+- **Login:** AVM challenge-response (MD5 over **UTF-16LE** — the gotcha), SID reused ~900 s to spare the box.
+- **Data source:** TR-064 `GetGenericAssociatedDeviceInfo` per box → `SignalStrength` (%) per phone.
+- **Vector:** collect every box value per phone → `[Box A%, Box B%, …]`.
+- **Match:** `best_room()` compares the vector against calibrated room fingerprints (mean deviation over all boxes).
+- **Hardening:** retries + pauses against FritzBox overload, large normal intervals as protection.
 
 ---
 
-## License / Lizenz
+### 🔥 The Story — how “impossible” became proof
 
-MIT — Copyright © 2026 Murat Danis
+This README documents the journey honestly, dead ends included. There was no genius trick — there was stubbornness.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction. See [LICENSE](LICENSE) for the full text. The software is provided "as is", without warranty of any kind.
+1. **The first consensus:** “FritzBox can't do indoor tracking, a box reports only **one** value per phone — everyone uses ESP32.” Sounds solid. It was incomplete.
+2. **Mesh-sticking discovered:** a phone clings to an old box even after the person has left. “Which box it's on” ≠ “where the person is.” First proof the naive assumption is wrong.
+3. **~12 API routes across 3 test rounds:** many dead ends — `edit_device` (1 value), `meshlist.lua` (404), `meshTopo` (data, but **no** rssi fields), homeNet/meshNet (no dBm). Every route actually tested, not dismissed “by feel.”
+4. **Three times “impossible” — three times contradicted:** the AI confidently declared “you can't triangulate with a FritzBox” three times. Murat disagreed each time — on **physics**: neighbor boxes *hear* the phone faintly through the walls (exactly what the FritzBox uses internally for mesh steering). He was right every time.
+5. **💥 The breakthrough:** don't query only the master — **a dedicated login PER box.** Then TR-064 `GetGenericAssociatedDeviceInfo` returns each box's `SignalStrength`. **Proven:** the same phone seen by two boxes at once — `{Office 35%, Sara 10%}`. A real 2-box group, weaker on the second box because a wall sits between them.
+6. **Presence bug found & fixed:** a phone gone offline stuck to its old room — now: no box sees the phone = away.
+7. **The iPhone standby trap:** iPhones briefly vanish from the association list in standby without leaving the room. Fix: a 2-minute buffer before a room counts as “left.”
+
+**The strategy shift that turned everything:** away from *“query one box”* toward *“multi-box data collector.”* A snapshot became a dynamic positioning system. **Murat was right about all of it.**
+
+> The lesson: three “can't be done” is not proof it can't be done. Ask **all** nodes, not just the nearest.
+
+---
+
+### 📜 Changelog
+
+| Version | What was added |
+|---|---|
+| **v1** | One box, rough **floor** only (“which box is the phone on”). |
+| **v5** | **Per-room fingerprint calibration** — 1 box + dBm, first room accuracy. |
+| **v6** | **Multi-box data collector:** all boxes individually via TR-064, presence check (offline = away), **SQLite history**, adaptive polling. |
+| **v6.1** | **Guest detection** + **60-day auto-cleanup**. |
+| **FritzTrack4U (public)** | Config-driven **1–N boxes**, anonymized, **full-vector match across all boxes**. |
+
+---
+
+<a name="-turkce"></a>
+## 🇹🇷 Tuerkce
+
+> Tum ev icin oda-bazli konum tespiti — **sadece zaten duvarda asili olan FritzBox router'larla.** Ekstra donanim yok. ESP32 yok. API anahtari yok. Bir ila cok sayida AVM router, TR-064 ve "olmaz" demeye inanmama inadi.
+
+### 🧭 Temel Prensip — neden calisir
+
+GPS disarida mukemmel, iceride hic calismaz. Oysa kimin nerede oldugunu tam da ev icinde bilmek istersin. FritzTrack4U bunu tek bir fikirle cozer:
+
+> **Her FritzBox ayni telefonu AYNI ANDA olcer — her biri kendi sinyal gucuyle.**
+
+Bir odadaki telefon *tek* bir deger degil, tum kutular uzerinde bir **vektor** uretir. En guclu kutu **kati** belli eder. **Tam vektor** **odayi** belli eder. Eslestirme, kalibre edilmis oda parmak izlerine karsi yapilir — sadece en guclu kutuya degil, **tum** kutulara gore.
+
+```mermaid
+flowchart LR
+    P(("📱 Bir telefon<br/>calisma odasinda"))
+    P -. "guclu" .-> B1["📡 Kutu A<br/>80%"]
+    P -. "orta" .-> B2["📡 Kutu B<br/>40%"]
+    P -. "zayif" .-> B3["📡 Kutu C<br/>15%"]
+    P -. "cok zayif" .-> B4["📡 Kutu D<br/>5%"]
+    B1 --> V["🧮 Vektor<br/>{A:80, B:40,<br/>C:15, D:5}"]
+    B2 --> V
+    B3 --> V
+    B4 --> V
+    V --> M{{"Oda parmak izleriyle<br/>karsilastir<br/>(TUM kutular uzerinde<br/>ortalama sapma)"}}
+    M --> R(["🏠 Konum:<br/>calisma odasi"])
+```
+
+**Onemli nokta:** konum, **tam vektor karsilastirmasindan** gelir (tum kutular uzerinde ortalama mutlak sapma), **yalnizca en guclu kutudan degil.** Ne kadar cok kutu dinlerse, o kadar isabetli olur.
+
+```
+   ┌─────────────────────────────────────────────────────────────────┐
+   │   📱  BIR oda (orn. ofis)                                          │
+   │       │                                                           │
+   │       ├──── 📡 Kutu 1  ▓▓▓▓▓▓▓▓░░  80%   ← guclu, ayni oda        │
+   │       ├──── 📡 Kutu 2  ▓▓▓▓░░░░░░  40%   ← yan oda                │
+   │       ├──── 📡 Kutu 3  ▓▓░░░░░░░░  15%   ← duvarin ardindan       │
+   │       └──── 📡 Kutu 4  ▓░░░░░░░░░   5%   ← baska kat              │
+   │                          ▼                                        │
+   │              Vektor {80, 40, 15, 5}  ──►  ODA: ofis ✅            │
+   │                                                                   │
+   │   En guclu kutu = KAT          Tam vektor = ODA                   │
+   │   Hicbir kutu telefonu gormez = EVDE DEGIL                        │
+   └─────────────────────────────────────────────────────────────────┘
+```
+
+### ✨ Ozellikler
+
+- 🏠 **Oda-bazli konum:** cok-kutulu sinyal vektoru + kalibre parmak izleri (tum kutular uzerinde ortalama sapma).
+- 🪜 **Kat tespiti:** en guclu kutudan — tek **bir** kutuyla bile calisir.
+- 🚪 **Var/yok:** **hicbir** kutu telefonu gormuyorsa → kisi evde degil.
+- 👥 **Misafir tespiti:** bilinmeyen cihazlar misafir olarak isaretlenir, sessizce atlanmaz.
+- 🗄️ **SQLite gecmisi** ve **60 gunluk** otomatik temizlik — kim ne zaman hangi odadaydi.
+- ⏱️ **Uyarlanabilir tarama:** harekette hizli, dingin durumda tutumlu — FritzBox'i korur.
+- 🔌 **Home Assistant** **MQTT otomatik kesfi** ile — kisi basina bir sensor, elle ayar yok.
+- 🧩 **Yapilandirma-tabanli, 1 ila N kutu:** tek kutuyla calisir, istedigin kadar olceklenir.
+- 💸 **0 € ekstra donanim. API anahtari yok. Bulut yok.**
+
+### 📈 Donanim olcekleme — cok kutu, cok isabet
+
+| Kutu | Ne elde edersin | Isabet |
+|:--:|---|---|
+| **1 kutu** | Telefon hangi kutuda? → kaba **kat** | 🟡 kat seviyesi |
+| **2–3 kutu** | Ilk sinyal vektorleri → **oda** (parmak iziyle) | 🟢 oda seviyesi |
+| **4+ kutu** | Yogun vektor → saglam oda, oda **icinde** konum temeli | 🟢🟢 oda seviyesi + |
+
+> Pratik kural: **En guclu kutu = kat. Tam vektor = oda. Kutu yok = evde degil.**
+
+### ⚔️ Karsilastirma — FritzTrack4U vs. ESP32-Bermuda
+
+Durust olalim: ESP32 daha isabetli, profesyonel standarttir. FritzTrack4U **sifir ekstra donanim** istedigin zaman kazanir.
+
+| Olcut | **FritzTrack4U** | **ESP32 Bermuda / ESPresense** |
+|---|---|---|
+| Donanim maliyeti | **0 €** (kutular hazir) | cip basina ~5 €, oda basina bir tane |
+| Evdeki ekstra cihaz | **yok** | cok (her odaya bir cip) |
+| Isabet | kaba → oda-bazli (vektorle) | **oda-bazli, <10 sn** |
+| Olgunluk | kendin yap, burada belgeli | **profesyonel standart** |
+| Kurulum | kutu basina 1 router kullanicisi | cipleri flashla + dagit |
+| Ek guc tuketimi | **0** (kutular zaten calisir) | dusuk ama katlanmis |
+| Ne zaman kazanir | **hicbir sey almak istemiyorsan** | **maksimum isabet istiyorsan** |
+
+> **Sonuc:** "ESP32'den iyi" degil — **bedava ve yeterince iyi, gelisime acik.**
+
+### 🚀 Hizli baslangic
+
+```bash
+git clone https://github.com/<kullanici>/FritzTrack4U.git
+cd FritzTrack4U
+pip install -r requirements.txt
+
+cp config.example.yaml config.yaml
+# config.yaml: kutu basina IP + kullanici + kat, MQTT broker, cihazlar
+
+python fritztrack4u.py
+```
+
+**Cok-kutu icin zorunlu adim (asil puf nokta):** **her** FritzBox'ta **"FRITZ!Box ayarlari"** yetkisine sahip ozel bir kullanici olustur. Ancak o zaman her kutu TR-064 uzerinden kendi sinyal gucunu verir. Sadece master'i sorgularsan tek deger alirsin — ve vektor olmaz.
+
+```yaml
+# config.example.yaml (kesit)
+boxes:
+  - name: "Kutu A"     # master
+    host: "192.168.x.1"
+    user: "tracker"
+    floor: 0
+  - name: "Kutu B"
+    host: "192.168.x.2"
+    user: "tracker"
+    floor: 1
+  # ... 1 ila N kutu
+mqtt:
+  host: "192.168.x.y"
+  port: 1883
+poll:
+  normal_seconds: 300
+  live_seconds: 3
+history:
+  retention_days: 60
+```
+
+### 🛠️ Nasil calisir
+
+```
+   N x FritzBox (mesh)              Sunucu (mini, sadece LAN)           Home Assistant
+   ┌──────────────┐                 ┌──────────────────────────┐       ┌──────────────┐
+   │ Kutu A (master)│ TR-064 / 49000 │  fritztrack4u.py         │  MQTT │  kisi basina  │
+   │ Kutu B       │◄───────────────►│  - kutu basina giris (SID)│──────►│  sensor       │
+   │ Kutu C       │                 │  - kutu basina % sinyal   │ 1883 │  var/yok      │
+   │ Kutu D       │                 │  - vektor + parmak izi    │       │  + canli btn  │
+   └──────────────┘                 │  - SQLite 60 gun gecmis   │       │  + (3D goruntu)│
+                                     └──────────────────────────┘       └──────────────┘
+```
+
+- **Giris:** AVM challenge-response (MD5, **UTF-16LE** uzerinden — puf nokta), SID kutuyu yormamak icin ~900 sn tekrar kullanilir.
+- **Veri kaynagi:** kutu basina TR-064 `GetGenericAssociatedDeviceInfo` → telefon basina `SignalStrength` (%).
+- **Vektor:** telefon basina her kutu degerini topla → `[Kutu A%, Kutu B%, …]`.
+- **Eslestirme:** `best_room()` vektoru kalibre oda parmak izleriyle karsilastirir (tum kutular uzerinde ortalama sapma).
+- **Saglamlastirma:** FritzBox asiri yukune karsi yeniden deneme + bekleme, koruma icin genis normal araliklar.
+
+---
+
+### 🔥 Hikaye — "imkansiz" nasil kanita donustu
+
+Bu README yolculugu durustce belgeler, cikmaz sokaklar dahil. Dahiyane bir numara yoktu — inat vardi.
+
+1. **Ilk uzlasi:** "FritzBox ev ici takip yapamaz, bir kutu telefon basina yalnizca **tek** deger verir — herkes ESP32 kullanir." Saglam gorunur. Eksikti.
+2. **Mesh-yapismasi kesfi:** telefon, kisi coktan gitse bile eski bir kutuya yapisir. "Hangi kutuda" ≠ "kisi nerede". Naif varsayimin yanlis oldugunun ilk kaniti.
+3. **3 turda ~12 API yolu:** cok cikmaz — `edit_device` (1 deger), `meshlist.lua` (404), `meshTopo` (veri var ama **rssi yok**), homeNet/meshNet (dBm yok). Her yol gercekten denendi, "hissederek" elenmedi.
+4. **Uc kez "imkansiz" — uc kez itiraz:** yapay zeka uc kez kendinden emin "FritzBox ile uclulama olmaz" dedi. Murat her seferinde **fizikle** itiraz etti: komsu kutular telefonu duvarlardan zayifca *duyar* (FritzBox bunu mesh yonlendirme icin zaten kullanir). Her seferinde haklı cikti.
+5. **💥 Atilim:** sadece master'i degil — **her kutu icin ayri giris.** O zaman TR-064 `GetGenericAssociatedDeviceInfo` her kutunun `SignalStrength` degerini verir. **Kanitlandi:** ayni telefon iki kutu tarafindan ayni anda gorulur — `{Ofis %35, Sara %10}`. Gercek bir 2-kutu grubu; aralarinda duvar oldugu icin ikinci kutuda daha zayif.
+6. **Var/yok hatasi bulundu & duzeltildi:** cevrimdisi olan telefon eski odaya yapisiyordu — artik: hicbir kutu gormezse = evde degil.
+7. **iPhone bekleme tuzagi:** iPhone'lar beklemede odadan cikmadan kisaca iliski listesinden kaybolur. Cozum: bir oda "terk edildi" sayilmadan once 2 dakikalik tampon.
+
+**Her seyi ceviren strateji degisimi:** *"bir kutuyu sorgula"*dan *"cok-kutulu veri toplayici"*ya. Anlik goruntu, dinamik bir konum sistemine donustu. **Murat her konuda haklıydı.**
+
+> Ders: uc kez "olmaz" demek, olmayacaginin kaniti degildir. En yakin dugumu degil, **tum** dugumleri sor.
+
+---
+
+### 📜 Degisiklik gunlugu
+
+| Surum | Ne eklendi |
+|---|---|
+| **v1** | Tek kutu, sadece kaba **kat** ("telefon hangi kutuda"). |
+| **v5** | **Oda basina parmak izi kalibrasyonu** — 1 kutu + dBm, ilk oda isabeti. |
+| **v6** | **Cok-kutulu veri toplayici:** tum kutular TR-064 ile tek tek, var/yok kontrolu (cevrimdisi = yok), **SQLite gecmisi**, uyarlanabilir tarama. |
+| **v6.1** | **Misafir tespiti** + **60 gun otomatik temizlik**. |
+| **FritzTrack4U (public)** | Yapilandirma-tabanli **1–N kutu**, anonimlestirilmis, **tum kutular uzerinde tam vektor eslestirmesi**. |
+
+---
+
+<a name="-lizenz--license--lisans"></a>
+## 📄 Lizenz / License / Lisans
+
+**MIT** — frei nutzbar, frei aenderbar, ohne Gewaehr. / Free to use and modify, no warranty. / Ozgurce kullan ve degistir, garanti yok.
+
+---
+
+> ⚖️ **DE —** FRITZ! und FRITZ!Box sind eingetragene Marken der FRITZ! GmbH (vormals AVM GmbH). Dieses Projekt ist ein unabhaengiges, von der Community entwickeltes Werkzeug und steht in keiner Verbindung zu FRITZ!/AVM. Produktnamen werden ausschliesslich zu Identifikationszwecken genannt, um die Kompatibilitaet zu beschreiben.
+>
+> **EN —** FRITZ! and FRITZ!Box are registered trademarks of FRITZ! GmbH (formerly AVM GmbH). This project is an independent, community-developed tool, neither affiliated with, authorized, sponsored nor endorsed by FRITZ!/AVM. Product names are used for identification purposes only to describe compatibility.
+
+<div align="center">
+
+*Gebaut aus Sturheit, FritzBoxen und einem Mini-Server ohne WLAN-Karte.*
+*Built from stubbornness, FritzBoxes, and a mini-server with no Wi-Fi card.*
+*Inattan, FritzBox'lardan ve WLAN karti olmayan bir mini sunucudan dogdu.*
+
+**⭐ Wenn dich das hier ueberzeugt hat — gib einen Stern. / If this convinced you — drop a star. / Ikna olduysan — bir yildiz birak.**
+
+</div>
