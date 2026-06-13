@@ -1,0 +1,36 @@
+# === FritzTrack4U .gitignore ===
+# WICHTIG: Niemals echte Zugangsdaten oder persoenliche Daten pushen!
+
+# Echte Konfiguration mit Passwoertern/IPs/MACs - NIE committen!
+config.json
+*.local.json
+
+# Datenbank mit Bewegungsverlauf (persoenliche Daten)
+*.db
+*.sqlite
+*.sqlite3
+fritzgps_verlauf.db
+fritztrack_history.db
+
+# Fingerprints (enthalten Wohnungs-Layout)
+fingerprints.json
+*_fingerprints.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Logs
+*.log
+logs/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp

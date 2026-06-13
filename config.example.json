@@ -1,0 +1,95 @@
+{
+  "_comment": "FritzTrack4U config. Copy to config.json and fill in your real values. NO real data below - only placeholders. Works with 1 box, 1 box + 1 repeater, or N boxes. More boxes = more accurate room match. Any '_comment' key is ignored by the daemon.",
+
+  "_comment_minimal": "MINIMAL SETUP (uncomment / use as 'boxes' if you only have 1 FritzBox + 1 repeater). Example: [ {\"name\":\"FritzBox\",\"ip\":\"192.168.178.1\",\"floor\":\"Ground floor\",\"floor_nr\":0,\"user\":\"YOUR_USER\",\"password\":\"YOUR_PASSWORD\"}, {\"name\":\"Repeater\",\"ip\":\"192.168.178.2\",\"floor\":\"Upper floor\",\"floor_nr\":1,\"user\":\"YOUR_USER\",\"password\":\"YOUR_PASSWORD\"} ]",
+
+  "boxes": [
+    {
+      "_comment": "Each box: name (shown everywhere), ip (TR-064 on port 49000), floor (free text), floor_nr (sort order), and FritzBox login. Per-box user/password override the global 'fritzbox' block below.",
+      "name": "FritzBox",
+      "ip": "192.168.178.1",
+      "floor": "Ground floor",
+      "floor_nr": 0,
+      "user": "YOUR_USER",
+      "password": "YOUR_PASSWORD"
+    },
+    {
+      "name": "Repeater Kitchen",
+      "ip": "192.168.178.2",
+      "floor": "Ground floor",
+      "floor_nr": 0,
+      "user": "YOUR_USER",
+      "password": "YOUR_PASSWORD"
+    },
+    {
+      "name": "Repeater Bedroom",
+      "ip": "192.168.178.3",
+      "floor": "Upper floor",
+      "floor_nr": 1,
+      "user": "YOUR_USER",
+      "password": "YOUR_PASSWORD"
+    },
+    {
+      "name": "Repeater Attic",
+      "ip": "192.168.178.4",
+      "floor": "Attic",
+      "floor_nr": 2,
+      "user": "YOUR_USER",
+      "password": "YOUR_PASSWORD"
+    }
+  ],
+
+  "fritzbox": {
+    "_comment": "Optional global FritzBox credentials used for any box that does NOT set its own user/password.",
+    "user": "YOUR_USER",
+    "password": "YOUR_PASSWORD"
+  },
+
+  "_comment_devices": "Tracked phones: MAC address -> friendly name. Use real MACs of the phones you want to locate.",
+  "devices": {
+    "AA:BB:CC:DD:EE:FF": "Person1",
+    "11:22:33:44:55:66": "Person2"
+  },
+
+  "_comment_exclude_names": "Device names ignored for guest detection (smart-home gear, printers, neighbours). Any WLAN device not in 'devices' and not listed here is reported as a guest.",
+  "exclude_names": [
+    "SmartTV",
+    "Printer",
+    "Thermostat"
+  ],
+
+  "fingerprints": {
+    "_comment": "Optional per-floor room fingerprints: floor -> room -> { box_name: expected_signal_percent }. The strongest box picks the floor; the fingerprint then picks the room within fingerprint_tolerance. Omit a floor to resolve floor-only.",
+    "Ground floor": {
+      "Living room": { "FritzBox": 80, "Repeater Kitchen": 40 },
+      "Kitchen": { "FritzBox": 35, "Repeater Kitchen": 85 }
+    },
+    "Upper floor": {
+      "Bedroom": { "Repeater Bedroom": 90 }
+    }
+  },
+
+  "mqtt": {
+    "_comment": "Optional. If enabled=false the daemon only writes SQLite + stdout. If enabled=true but paho-mqtt is missing, MQTT is auto-disabled with a friendly hint.",
+    "enabled": false,
+    "host": "192.168.178.10",
+    "port": 1883,
+    "user": "YOUR_MQTT_USER",
+    "password": "YOUR_MQTT_PASSWORD",
+    "discovery_prefix": "homeassistant",
+    "base_topic": "fritztrack4u"
+  },
+
+  "intervals": {
+    "_comment": "Adaptive poll cadence in seconds.",
+    "normal": 60,
+    "movement": 15,
+    "idle": 300,
+    "live": 3
+  },
+
+  "retention_days": 60,
+  "fingerprint_tolerance": 0.15,
+  "tr064_timeout": 10,
+  "db_path": "fritztrack4u.db"
+}
