@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile the daemon (syntax check)
+        run: python -m py_compile fritztrack4u.py
+
+      - name: Validate config.example.json is valid JSON
+        run: |
+          python - <<'EOF'
+          import json
+          # Strip // and _comment fields the same way the loader ignores them,
+          # but plain json.load must already succeed on the example.
+          with open("config.example.json", encoding="utf-8") as f:
+              cfg = json.load(f)
+          assert "boxes" in cfg, "config must contain 'boxes'"
+          assert isinstance(cfg["boxes"], list) and cfg["boxes"], "'boxes' must be a non-empty list"
+          print("config.example.json OK -", len(cfg["boxes"]), "example boxes")
+          EOF
+
+      - name: Lint with ruff (non-blocking)
+        continue-on-error: true
+        run: |
+          pip install ruff
+          ruff check fritztrack4u.py || true

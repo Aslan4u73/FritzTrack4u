@@ -2,7 +2,7 @@
 """
 FritzTrack4U - Indoor positioning daemon based on FritzBox WLAN signal strength.
 
-Part of Murat's "4U" project family (TA4U, FB4U, ASSIST4U, MC4U, WA4U).
+Open source (MIT) by Murat Danis - https://aslan4u.de
 
 How it works
 ------------

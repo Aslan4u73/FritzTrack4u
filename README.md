@@ -38,7 +38,6 @@
 
 <div align="center">
 
-<!-- TODO: Murat liefert -->
 <!-- ![FritzTrack4U Live-Demo](docs/images/demo.gif) -->
 > 🎬 **Demo-GIF folgt** · `docs/images/demo.gif` — *vier Etagen, Live-Punkte pro Person, ohne dass jemand eine App oeffnet.*
 
@@ -121,8 +120,8 @@ flowchart TD
 
 ### ✨ Features
 
-- 🏠 **Raumgenaue Ortung** ueber Multi-Box-Signalvektor + kalibrierte Fingerprints (mean absolute deviation ueber alle Boxen).
-- 🪜 **Etagen-Erkennung** ueber die staerkste Box — funktioniert schon ab **einer** Box.
+- 🪜 **Etagen-Erkennung** ueber die staerkste Box — funktioniert **sofort**, schon ab **einer** Box.
+- 🏠 **Raum-Erkennung** ueber Multi-Box-Signalvektor + kalibrierte Fingerprints — **nach** dem Einlernen pro Raum (Kalibrierung noetig, siehe unten).
 - 🚪 **Anwesenheit/Abwesenheit:** Sieht **keine** Box das Handy → die Person ist nicht zu Hause.
 - 👥 **Gaeste-Erkennung:** Unbekannte Geraete werden als Gast erkannt, nicht still ignoriert.
 - 🗄️ **SQLite-Verlauf** mit **60-Tage**-Auto-Cleanup — wer war wann in welchem Raum.
@@ -135,11 +134,11 @@ flowchart TD
 
 | Boxen | Was du bekommst | Genauigkeit |
 |:--:|---|---|
-| **1 Box** | Welche Box haengt das Handy? → grobe **Etage** | 🟡 etagen-grob |
-| **2–3 Boxen** | Erste Signalvektoren → **Raum** (mit Fingerprint) | 🟢 raumgenau |
-| **4+ Boxen** | Dichter Vektor → robuster Raum, Basis fuer Position **im** Raum | 🟢🟢 raumgenau + |
+| **1 Box** | Welche Box haengt das Handy? → grobe **Etage** + Anwesenheit | 🟢 sofort, ohne Setup |
+| **2–3 Boxen** | Signalvektoren → **Raum** — **nach Kalibrierung** pro Raum | 🟡 raumgenau *nach Einlernen* |
+| **4+ Boxen** | Dichterer Vektor → stabiler Raum, weniger Schwankung | 🟡 raumgenau, robuster |
 
-> Faustregel: **Staerkste Box = Etage. Voller Vektor = Raum. Keine Box = abwesend.**
+> **Ehrlich:** Etage + Anwesenheit laufen sofort. **Raum-Genauigkeit** braucht **Kalibrierung** (einmal pro Raum einlernen) — und haengt davon ab, ob ein Handy ueberhaupt von mehreren Boxen gesehen wird (WLAN-Physik: ein Handy ist meist nur mit *einer* Box verbunden). Das ist ein **Lern-/Bastel-Projekt**, kein Zentimeter-GPS.
 
 ### ✅ Was es kann — und ❌ was es ehrlich NICHT kann
 
@@ -228,38 +227,33 @@ flowchart LR
 ### 🚀 Schnellstart
 
 ```bash
-git clone https://github.com/<dein-user>/FritzTrack4U.git
-cd FritzTrack4U
+git clone https://github.com/Aslan4u73/FritzTrack4u.git
+cd FritzTrack4u
+
+# Nur noetig wenn du MQTT/Home Assistant nutzt (sonst laeuft es ohne Abhaengigkeiten):
 pip install -r requirements.txt
 
-cp config.example.yaml config.yaml
-# config.yaml: pro Box IP + Benutzer + Etage eintragen, MQTT-Broker, Geraete
+# Konfiguration aus der Vorlage anlegen und ausfuellen:
+cp config.example.json config.json
+nano config.json
 
-python fritztrack4u.py
+python3 fritztrack4u.py --config ./config.json
 ```
 
-**Pflicht-Schritt fuer Multi-Box (der eigentliche Trick):** Lege auf **jeder** FritzBox einen eigenen Benutzer mit dem Recht **„FRITZ!Box Einstellungen“** an. Nur dann liefert jede Box per TR-064 ihre eigene Signalstaerke. Fragst du nur den Master, bekommst du nur einen Wert — und damit keinen Vektor.
+**Pflicht-Schritt fuer Multi-Box (der eigentliche Trick):** Lege auf **jeder** FritzBox einen eigenen Benutzer mit dem Recht **„FRITZ!Box Einstellungen“** an. Nur dann liefert jede Box per TR-064 ihre eigene Signalstaerke. Fragst du nur den Master, bekommst du nur einen Wert — und damit keinen Vektor. Komplette Anleitung: **[docs/INSTALL.de.md](docs/INSTALL.de.md)**.
 
-```yaml
-# config.example.yaml (Auszug)
-boxes:
-  - name: "Box A"      # Master
-    host: "192.168.x.1"
-    user: "tracker"
-    floor: 0
-  - name: "Box B"
-    host: "192.168.x.2"
-    user: "tracker"
-    floor: 1
-  # ... 1 bis N Boxen
-mqtt:
-  host: "192.168.x.y"
-  port: 1883
-poll:
-  normal_seconds: 300
-  live_seconds: 3
-history:
-  retention_days: 60
+```json
+// config.example.json (Auszug — volle Vorlage im Repo)
+{
+  "boxes": [
+    { "name": "Buero",        "ip": "192.168.178.1", "floor": "Erdgeschoss",  "floor_nr": 0, "user": "tracker", "password": "DEIN_PASSWORT" },
+    { "name": "Schlafzimmer", "ip": "192.168.178.2", "floor": "Obergeschoss", "floor_nr": 1, "user": "tracker", "password": "DEIN_PASSWORT" }
+  ],
+  "devices": { "AA:BB:CC:DD:EE:FF": "Person1" },
+  "mqtt": { "enabled": true, "host": "192.168.178.50", "port": 1883, "user": "ha", "password": "..." },
+  "intervals": { "normal": 60, "movement": 15, "idle": 300, "live": 3 },
+  "retention_days": 60
+}
 ```
 
 ### 🛠️ Wie es technisch laeuft
@@ -281,7 +275,6 @@ history:
 - **Match:** `best_room()` vergleicht den Vektor gegen kalibrierte Raum-Fingerprints (mittlere Abweichung ueber alle Boxen).
 - **Haertung:** Retries + Pausen gegen FritzBox-Ueberlast, grosse Normal-Intervalle als Schutz.
 
-<!-- TODO: Murat liefert -->
 <!-- ![3D-Roentgenhaus](docs/images/3d-haus.png) -->
 > 🖼️ **Screenshots folgen** · `docs/images/3d-haus.png`, `docs/images/ha-sensoren.png`
 
@@ -406,38 +399,33 @@ Let's be honest: ESP32 is the more accurate, professional standard. FritzTrack4U
 ### 🚀 Quick start
 
 ```bash
-git clone https://github.com/<your-user>/FritzTrack4U.git
-cd FritzTrack4U
+git clone https://github.com/Aslan4u73/FritzTrack4u.git
+cd FritzTrack4u
+
+# Only needed if you use MQTT/Home Assistant (otherwise it runs dependency-free):
 pip install -r requirements.txt
 
-cp config.example.yaml config.yaml
-# config.yaml: per box IP + user + floor, MQTT broker, devices
+# Create your config from the template and fill it in:
+cp config.example.json config.json
+nano config.json
 
-python fritztrack4u.py
+python3 fritztrack4u.py --config ./config.json
 ```
 
-**Required for multi-box (the actual trick):** create a dedicated user with the **“FRITZ!Box settings”** permission on **every** box. Only then does each box return its own signal strength over TR-064. Query only the master and you get a single value — and therefore no vector.
+**Required for multi-box (the actual trick):** create a dedicated user with the **“FRITZ!Box settings”** permission on **every** box. Only then does each box return its own signal strength over TR-064. Query only the master and you get a single value — and therefore no vector. Full guide: **[docs/INSTALL.de.md](docs/INSTALL.de.md)** (German).
 
-```yaml
-# config.example.yaml (excerpt)
-boxes:
-  - name: "Box A"      # master
-    host: "192.168.x.1"
-    user: "tracker"
-    floor: 0
-  - name: "Box B"
-    host: "192.168.x.2"
-    user: "tracker"
-    floor: 1
-  # ... 1 to N boxes
-mqtt:
-  host: "192.168.x.y"
-  port: 1883
-poll:
-  normal_seconds: 300
-  live_seconds: 3
-history:
-  retention_days: 60
+```json
+// config.example.json (excerpt — full template in the repo)
+{
+  "boxes": [
+    { "name": "Office",  "ip": "192.168.178.1", "floor": "Ground floor", "floor_nr": 0, "user": "tracker", "password": "YOUR_PASSWORD" },
+    { "name": "Bedroom", "ip": "192.168.178.2", "floor": "Upper floor",  "floor_nr": 1, "user": "tracker", "password": "YOUR_PASSWORD" }
+  ],
+  "devices": { "AA:BB:CC:DD:EE:FF": "Person1" },
+  "mqtt": { "enabled": true, "host": "192.168.178.50", "port": 1883, "user": "ha", "password": "..." },
+  "intervals": { "normal": 60, "movement": 15, "idle": 300, "live": 3 },
+  "retention_days": 60
+}
 ```
 
 ### 🛠️ How it works
@@ -578,38 +566,33 @@ Durust olalim: ESP32 daha isabetli, profesyonel standarttir. FritzTrack4U **sifi
 ### 🚀 Hizli baslangic
 
 ```bash
-git clone https://github.com/<kullanici>/FritzTrack4U.git
-cd FritzTrack4U
+git clone https://github.com/Aslan4u73/FritzTrack4u.git
+cd FritzTrack4u
+
+# Sadece MQTT/Home Assistant kullaniyorsan gerekli (yoksa bagimliliksiz calisir):
 pip install -r requirements.txt
 
-cp config.example.yaml config.yaml
-# config.yaml: kutu basina IP + kullanici + kat, MQTT broker, cihazlar
+# Sablondan kendi yapilandirmani olustur ve doldur:
+cp config.example.json config.json
+nano config.json
 
-python fritztrack4u.py
+python3 fritztrack4u.py --config ./config.json
 ```
 
-**Cok-kutu icin zorunlu adim (asil puf nokta):** **her** FritzBox'ta **"FRITZ!Box ayarlari"** yetkisine sahip ozel bir kullanici olustur. Ancak o zaman her kutu TR-064 uzerinden kendi sinyal gucunu verir. Sadece master'i sorgularsan tek deger alirsin — ve vektor olmaz.
+**Cok-kutu icin zorunlu adim (asil puf nokta):** **her** FritzBox'ta **"FRITZ!Box ayarlari"** yetkisine sahip ozel bir kullanici olustur. Ancak o zaman her kutu TR-064 uzerinden kendi sinyal gucunu verir. Sadece master'i sorgularsan tek deger alirsin — ve vektor olmaz. Tam kilavuz: **[docs/INSTALL.de.md](docs/INSTALL.de.md)** (Almanca).
 
-```yaml
-# config.example.yaml (kesit)
-boxes:
-  - name: "Kutu A"     # master
-    host: "192.168.x.1"
-    user: "tracker"
-    floor: 0
-  - name: "Kutu B"
-    host: "192.168.x.2"
-    user: "tracker"
-    floor: 1
-  # ... 1 ila N kutu
-mqtt:
-  host: "192.168.x.y"
-  port: 1883
-poll:
-  normal_seconds: 300
-  live_seconds: 3
-history:
-  retention_days: 60
+```json
+// config.example.json (kesit — tam sablon repo'da)
+{
+  "boxes": [
+    { "name": "Ofis",    "ip": "192.168.178.1", "floor": "Zemin kat", "floor_nr": 0, "user": "tracker", "password": "SIFREN" },
+    { "name": "Yatak",   "ip": "192.168.178.2", "floor": "Ust kat",   "floor_nr": 1, "user": "tracker", "password": "SIFREN" }
+  ],
+  "devices": { "AA:BB:CC:DD:EE:FF": "Kisi1" },
+  "mqtt": { "enabled": true, "host": "192.168.178.50", "port": 1883, "user": "ha", "password": "..." },
+  "intervals": { "normal": 60, "movement": 15, "idle": 300, "live": 3 },
+  "retention_days": 60
+}
 ```
 
 ### 🛠️ Nasil calisir
