@@ -127,6 +127,20 @@ So wird aus einer einzelnen Box ein grober Etagen-Sensor — und aus mehreren Bo
 
 > Faustregel: **Staerkste Box = Etage. Voller Vektor = Raum. Keine Box = abwesend.**
 
+### ✅ Was es kann — und ❌ was es ehrlich NICHT kann
+
+Damit niemand falsche Erwartungen hat (und das Projekt glaubwuerdig bleibt):
+
+| ✅ Das kann FritzTrack4U | ❌ Das kann es NICHT |
+|---|---|
+| Erkennen in **welchem Raum / auf welcher Etage** jemand ist | **Zentimeter-genaue** Position im Raum (kein „X steht am Schreibtisch“) |
+| **Anwesend / abwesend** zuverlaessig melden | Geraete sehen, die **nicht im WLAN** verbunden sind (z.B. fremde Gast-Handys ausser Reichweite) |
+| **Mehrere Personen** gleichzeitig (je 1 getrackt. Geraet) | Personen **ohne Handy** orten |
+| **Gaeste** (unbekannte Geraete) melden | Eine **fremde MAC zuverlaessig wiedererkennen** (iPhones randomisieren MACs) |
+| Mit **1 Box** (Etage) bis **N Boxen** (Raum) skalieren | Mit Hardware-Praezision von **UWB / BLE-Beacons** mithalten |
+
+> **Physikalische Grenze, ehrlich gesagt:** WLAN-Signal schwankt von Natur aus ein paar Prozent (auch wenn man stillsteht). Darum ist die Aufloesung **raum-genau, nicht punkt-genau**. Wer Zentimeter braucht, nutzt UWB oder BLE-Beacons. Wer wissen will *in welchem Zimmer* jemand ist — **ohne Zusatz-Hardware** — ist hier richtig.
+
 ### ⚔️ Vergleich — FritzTrack4U vs. ESP32-Bermuda
 
 Ehrlich bleiben: ESP32 ist der genauere Profi-Standard. FritzTrack4U gewinnt, wenn du **null Zusatz-Hardware** willst.
@@ -142,6 +156,19 @@ Ehrlich bleiben: ESP32 ist der genauere Profi-Standard. FritzTrack4U gewinnt, we
 | Wann gewinnt es | du willst **nichts dazukaufen** | du willst **maximale Genauigkeit** |
 
 > **Fazit:** Kein „besser als ESP32“ — sondern **umsonst und gut genug, mit Luft nach oben.**
+
+### 💡 Anwendungs-Ideen (Vision)
+
+> Diese Szenarien sind die **Richtung**, nicht alle schon fertig. Was geplant ist, ist als _geplant_ markiert.
+
+**Smart-Home-Komfort im eigenen Zuhause** (der Kern):
+- 🔆 Kind betritt sein Zimmer → Licht geht an. Verlaesst es → nach Puffer wieder aus.
+- 🖥️ Du verlaesst das Buero → Monitore aus, PC sperrt, Heizung runter. _(geplant — benoetigt schaltbare Geraete)_
+- 🔥 Heizung folgt den Menschen statt der Uhr — warm, wo jemand ist. _(geplant)_
+- 🚪 „Wer ist zu Hause?“ als Karte fuers ganze Haus — Etage, Raum, Anwesenheit.
+- 👋 Gaeste-Hinweis: ein unbekanntes Handy taucht im WLAN auf.
+
+> **Bewusst NICHT das Ziel:** Mitarbeiter-Ueberwachung am Arbeitsplatz oder Kunden-Tracking im Laden. Das waere in Deutschland datenschutzrechtlich heikel (DSGVO, Betriebsrat) — FritzTrack4U ist ein **Werkzeug fuers eigene Zuhause**, mit deiner eigenen Familie und deiner eigenen Einwilligung.
 
 ### 🚀 Schnellstart
 
