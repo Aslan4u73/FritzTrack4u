@@ -7,6 +7,8 @@ config.json
 
 # Datenbank mit Bewegungsverlauf (persoenliche Daten)
 *.db
+*.db-wal
+*.db-shm
 *.sqlite
 *.sqlite3
 fritzgps_verlauf.db
@@ -37,3 +39,16 @@ Thumbs.db
 
 # Interne Strategie-/Kontakt-Entwuerfe (nicht oeffentlich)
 docs/AVM-Kontakt-Entwurf.md
+
+# Diagnose-/Test-Skripte und Dumps mit echten Credentials/IPs/MACs - NIE committen!
+_*.py
+_*.json
+_*.out
+monitor.py
+
+# Reverse-Engineering-Rohdaten/Beweis-Dossiers (enthalten echte Box-IPs, MACs, Topologie)
+# Vor Veroeffentlichung muessten diese anonymisiert werden.
+MULTI-FRITZBOX-ORTUNGSMODELL.md
+MESH-RSSI-PRUEFPROTOKOLL.md
+AVM-MESH-STEERING-MECHANIK.md
+AVM-WSS-REVERSE-ENGINEERING.md

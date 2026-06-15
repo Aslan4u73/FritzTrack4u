@@ -91,5 +91,20 @@
   "retention_days": 60,
   "fingerprint_tolerance": 0.15,
   "tr064_timeout": 10,
-  "db_path": "fritztrack4u.db"
+  "db_path": "fritztrack4u.db",
+
+  "_comment_smoothing": "smoothing_window: rolling average window per MAC (>=1; 1 = disabled). Stabilises room decisions against signal jitter.",
+  "smoothing_window": 3,
+
+  "_comment_penalty": "fingerprint_missing_penalty: extra deviation points per box that is in the fingerprint but not observed. Higher = prefers complete multi-box matches.",
+  "fingerprint_missing_penalty": 5,
+
+  "debug": {
+    "_comment": "HTTP debug server (stdlib, localhost only, read-only). http_enabled=true starts the server. live_mode=true forces the 3s live cadence (same as --live CLI flag).",
+    "_comment_mesh_ttl": "mesh_ttl: seconds between mesh topology re-fetches. Mesh changes rarely; 30s is the default. Increase to reduce SOAP load on the master box.",
+    "http_enabled": false,
+    "port": 8099,
+    "live_mode": false,
+    "mesh_ttl": 30
+  }
 }

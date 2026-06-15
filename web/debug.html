@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FritzTrack4U — Live Cockpit</title>
+<style>
+:root {
+  --bg:       #0E1116;
+  --bg2:      #141923;
+  --bg3:      #1a2030;
+  --glass:    rgba(255,255,255,0.05);
+  --glass2:   rgba(255,255,255,0.03);
+  --border:   rgba(255,255,255,0.09);
+  --border2:  rgba(255,255,255,0.05);
+  --accent:   #a855f7;
+  --accent2:  #7c3aed;
+  --text:     #F2F4F7;
+  --dim:      #9AA4B2;
+  --dim2:     #5a6478;
+  --ok:       #34C759;
+  --warn:     #FFB020;
+  --bad:      #E62E33;
+  --mono:     "SF Mono","Fira Mono","Consolas","Menlo",monospace;
+  --radius:   12px;
+  --radius-sm: 7px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ambient glow */
+body::before {
+  content: "";
+  position: fixed;
+  top: -30%;
+  left: -20%;
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(ellipse, rgba(168,85,247,0.07) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+body::after {
+  content: "";
+  position: fixed;
+  bottom: -30%;
+  right: -20%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(ellipse, rgba(30,155,215,0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== LAYOUT ===== */
+#app {
+  position: relative;
+  z-index: 1;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+}
+
+/* ===== HEADER ===== */
+header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.logo-mark {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-mark svg { color: var(--accent); flex-shrink: 0; }
+
+h1 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+h1 span { color: var(--accent); }
+
+.badge-debug {
+  font-size: 0.65rem;
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(168,85,247,0.12);
+  border: 1px solid rgba(168,85,247,0.3);
+  border-radius: 4px;
+  padding: 2px 7px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* live indicator */
+.live-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--dim);
+  font-family: var(--mono);
+}
+.live-dot .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 6px var(--ok);
+  animation: pulse 2s infinite;
+}
+.live-dot .dot.stale { background: var(--warn); box-shadow: 0 0 6px var(--warn); animation: none; }
+.live-dot .dot.dead  { background: var(--bad);  box-shadow: 0 0 6px var(--bad);  animation: none; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+/* controls */
+.ctrl-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ctrl-group label {
+  font-size: 0.75rem;
+  color: var(--dim);
+}
+select, button {
+  font-family: inherit;
+  font-size: 0.78rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--glass);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+select {
+  padding: 5px 8px;
+  outline: none;
+}
+select:focus { border-color: var(--accent); }
+
+button {
+  padding: 5px 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+button:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.18); }
+button.primary {
+  background: rgba(168,85,247,0.15);
+  border-color: rgba(168,85,247,0.4);
+  color: var(--accent);
+}
+button.primary:hover { background: rgba(168,85,247,0.25); }
+button.paused {
+  background: rgba(255,176,32,0.12);
+  border-color: rgba(255,176,32,0.4);
+  color: var(--warn);
+}
+
+/* mock badge */
+.mock-badge {
+  font-size: 0.68rem;
+  font-family: var(--mono);
+  color: var(--warn);
+  background: rgba(255,176,32,0.1);
+  border: 1px solid rgba(255,176,32,0.3);
+  border-radius: 4px;
+  padding: 3px 8px;
+  letter-spacing: 0.06em;
+}
+
+/* ===== TAB NAV ===== */
+.tab-nav {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+.tab-btn {
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  transition: all 0.18s;
+  margin-bottom: -1px;
+}
+.tab-btn:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.04);
+  border-color: transparent;
+}
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: rgba(168,85,247,0.07);
+}
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ===== OFFLINE BANNER ===== */
+#offline-banner {
+  display: none;
+  background: rgba(230,46,51,0.10);
+  border: 1px solid rgba(230,46,51,0.35);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+#offline-banner strong { color: var(--bad); display: block; margin-bottom: 4px; font-size: 0.92rem; }
+#offline-banner code {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  background: rgba(0,0,0,0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--warn);
+}
+#offline-banner.visible { display: block; }
+
+/* ===== STATUS BAR ===== */
+#status-bar {
+  font-size: 0.75rem;
+  font-family: var(--mono);
+  color: var(--dim);
+  margin-bottom: 14px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+#status-bar span { white-space: nowrap; }
+
+/* ===== SECTION TITLE ===== */
+.section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim2);
+  margin-bottom: 8px;
+  padding-left: 2px;
+}
+
+/* ===== GLASS CARD ===== */
+.card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+
+/* ===== LIVE TABLE ===== */
+#live-section { margin-bottom: 24px; }
+
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  font-family: var(--mono);
+  min-width: 600px;
+}
+
+thead th {
+  background: rgba(255,255,255,0.04);
+  color: var(--dim);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 9px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/* floor group header */
+thead .floor-header {
+  color: var(--accent);
+  font-size: 0.63rem;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  background: rgba(168,85,247,0.06);
+  border-bottom: none;
+  border-top: 1px solid rgba(168,85,247,0.15);
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--border2);
+  transition: background 0.15s;
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+/* away rows */
+tbody tr.away {
+  opacity: 0.45;
+}
+tbody tr.away td { color: var(--dim2); }
+
+tbody td {
+  padding: 10px 12px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* person name */
+td.person-name {
+  font-weight: 700;
+  font-size: 0.85rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  cursor: pointer;
+  color: var(--text);
+  transition: color 0.15s;
+  min-width: 110px;
+}
+td.person-name:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+tr.away td.person-name { color: var(--dim2); }
+
+/* signal cell */
+td.signal {
+  text-align: right;
+  color: var(--dim);
+  min-width: 72px;
+}
+td.signal.strongest {
+  color: var(--ok);
+  font-weight: 700;
+  background: rgba(52,199,89,0.07);
+  border-radius: 4px;
+}
+td.signal.no-sig { color: var(--dim2); }
+
+/* score cell */
+td.score-cell { text-align: center; min-width: 80px; }
+.score-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+.score-badge.good   { background: rgba(52,199,89,0.14);  color: var(--ok);  border: 1px solid rgba(52,199,89,0.3); }
+.score-badge.warn   { background: rgba(255,176,32,0.14); color: var(--warn);border: 1px solid rgba(255,176,32,0.3);}
+.score-badge.bad    { background: rgba(230,46,51,0.12);  color: var(--bad); border: 1px solid rgba(230,46,51,0.3); }
+.score-badge.none   { background: rgba(255,255,255,0.05);color: var(--dim2);border: 1px solid var(--border2); }
+
+/* away badge */
+.away-pill {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  background: rgba(230,46,51,0.1);
+  color: var(--bad);
+  border: 1px solid rgba(230,46,51,0.25);
+}
+.here-pill {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  background: rgba(52,199,89,0.1);
+  color: var(--ok);
+  border: 1px solid rgba(52,199,89,0.25);
+}
+
+/* em dash for nulls */
+.null-val { color: var(--dim2); }
+
+/* ===== HISTORY PANEL ===== */
+#history-section {
+  margin-bottom: 24px;
+}
+#history-panel {
+  display: none;
+}
+#history-panel.visible { display: block; }
+
+.history-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border2);
+  flex-wrap: wrap;
+}
+.history-header h2 {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.history-header h2 span { color: var(--accent); }
+.history-loading {
+  font-size: 0.78rem;
+  font-family: var(--mono);
+  color: var(--dim);
+}
+.close-btn {
+  margin-left: auto;
+  padding: 3px 9px;
+  font-size: 0.75rem;
+}
+
+/* timeline */
+.history-body { padding: 12px 16px; }
+
+/* mini bar timeline */
+.timeline-wrap {
+  display: flex;
+  gap: 2px;
+  height: 20px;
+  margin-bottom: 14px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.tl-seg {
+  flex: 1;
+  min-width: 3px;
+  cursor: default;
+  transition: opacity 0.15s;
+  position: relative;
+}
+.tl-seg:hover { opacity: 0.75; }
+.tl-seg.here { background: var(--ok); }
+.tl-seg.away { background: rgba(230,46,51,0.5); }
+.tl-seg.floor { background: var(--accent); }
+
+.history-table-wrap { overflow-x: auto; }
+
+table.hist {
+  min-width: 420px;
+  font-size: 0.78rem;
+}
+table.hist thead th { font-size: 0.65rem; }
+table.hist tbody td { padding: 7px 12px; }
+
+/* ===== BOX LIVE SECTION ===== */
+.floor-group-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 20px 0 8px 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.floor-group-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(168,85,247,0.2);
+}
+
+.box-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.box-card {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  overflow: hidden;
+  transition: border-color 0.2s, opacity 0.2s;
+}
+.box-card.unreachable {
+  border-color: rgba(230,46,51,0.3);
+}
+.box-card.hidden-box {
+  opacity: 0.35;
+}
+
+.box-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border2);
+  background: rgba(255,255,255,0.02);
+}
+
+.box-ampel {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.box-ampel.ok      { background: var(--ok);  box-shadow: 0 0 6px rgba(52,199,89,0.5); }
+.box-ampel.bad     { background: var(--bad); box-shadow: 0 0 6px rgba(230,46,51,0.5); animation: none; }
+.box-ampel.waiting { background: var(--dim2); }
+
+.box-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+}
+.box-meta {
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  color: var(--dim);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.box-status-label {
+  font-size: 0.68rem;
+  font-family: var(--mono);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+.box-status-label.ok      { color: var(--ok);  background: rgba(52,199,89,0.1);  border: 1px solid rgba(52,199,89,0.25); }
+.box-status-label.bad     { color: var(--bad); background: rgba(230,46,51,0.1);  border: 1px solid rgba(230,46,51,0.25); }
+.box-status-label.waiting { color: var(--dim2);background: rgba(255,255,255,0.05);border: 1px solid var(--border2); }
+
+.box-toggle-btn {
+  font-size: 0.7rem;
+  padding: 3px 9px;
+  flex-shrink: 0;
+}
+.box-toggle-btn.start-btn {
+  color: var(--ok);
+  border-color: rgba(52,199,89,0.35);
+  background: rgba(52,199,89,0.08);
+}
+.box-toggle-btn.stop-btn {
+  color: var(--dim);
+  border-color: var(--border);
+  background: transparent;
+}
+.box-toggle-btn:hover { opacity: 0.8; }
+
+.box-body {
+  padding: 0;
+  transition: max-height 0.25s ease, opacity 0.2s;
+  overflow: hidden;
+  max-height: 600px;
+}
+.box-body.collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* unreachable overlay in box body */
+.box-unreachable-msg {
+  padding: 18px 16px;
+  font-size: 0.8rem;
+  color: var(--bad);
+  font-family: var(--mono);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* device table in box */
+table.dev-tbl {
+  min-width: auto;
+  width: 100%;
+  font-size: 0.76rem;
+}
+table.dev-tbl thead th {
+  font-size: 0.63rem;
+  padding: 7px 12px;
+  position: static;
+}
+table.dev-tbl tbody td { padding: 8px 12px; }
+
+.dev-name-tracked {
+  font-weight: 700;
+  color: var(--text);
+}
+.dev-name-unknown {
+  color: var(--dim2);
+}
+
+/* signal bar */
+.sig-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 90px;
+}
+.sig-bar {
+  flex: 1;
+  height: 5px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.sig-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.sig-bar-fill.strong  { background: var(--ok); }
+.sig-bar-fill.medium  { background: var(--warn); }
+.sig-bar-fill.weak    { background: var(--bad); }
+.sig-pct {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--dim);
+  min-width: 30px;
+  text-align: right;
+}
+.sig-pct.strong { color: var(--ok); font-weight: 700; }
+
+.active-pill {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.active-pill.yes { background: rgba(52,199,89,0.1);  color: var(--ok);  border: 1px solid rgba(52,199,89,0.25); }
+.active-pill.no  { background: rgba(255,255,255,0.04);color: var(--dim2);border: 1px solid var(--border2); }
+
+/* ===== MESH SECTION ===== */
+.mesh-unavail {
+  padding: 20px 18px;
+  font-size: 0.82rem;
+  color: var(--dim);
+  line-height: 1.6;
+  background: rgba(255,255,255,0.02);
+  border-radius: var(--radius);
+  border: 1px solid var(--border2);
+}
+.mesh-unavail strong { color: var(--dim); display: block; margin-bottom: 4px; font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.mesh-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+@media (max-width: 680px) {
+  .mesh-grid { grid-template-columns: 1fr; }
+}
+
+.mesh-nodes-wrap, .mesh-links-wrap {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.mesh-sub-head {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--dim2);
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border2);
+  background: rgba(255,255,255,0.02);
+}
+
+.mesh-node-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border2);
+  font-size: 0.8rem;
+  transition: background 0.15s;
+}
+.mesh-node-row:last-child { border-bottom: none; }
+.mesh-node-row:hover { background: rgba(255,255,255,0.03); }
+
+.mesh-node-type {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  flex-shrink: 0;
+  letter-spacing: 0.04em;
+}
+.mesh-node-type.router   { background: rgba(168,85,247,0.15); color: var(--accent); border: 1px solid rgba(168,85,247,0.3); }
+.mesh-node-type.repeater { background: rgba(30,155,215,0.12); color: #1e9bd7;       border: 1px solid rgba(30,155,215,0.3); }
+.mesh-node-type.client   { background: rgba(255,255,255,0.07);color: var(--dim);    border: 1px solid var(--border2); }
+.mesh-node-type.unknown  { background: rgba(255,255,255,0.04);color: var(--dim2);   border: 1px solid var(--border2); }
+
+.mesh-node-name {
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+}
+.mesh-master-badge {
+  font-size: 0.62rem;
+  font-family: var(--mono);
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(168,85,247,0.12);
+  color: var(--accent);
+  border: 1px solid rgba(168,85,247,0.25);
+  letter-spacing: 0.05em;
+}
+.mesh-node-model {
+  font-size: 0.7rem;
+  font-family: var(--mono);
+  color: var(--dim2);
+}
+.mesh-node-mac {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--dim2);
+}
+
+.mesh-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border2);
+  font-size: 0.76rem;
+  flex-wrap: wrap;
+  transition: background 0.15s;
+}
+.mesh-link-row:last-child { border-bottom: none; }
+.mesh-link-row:hover { background: rgba(255,255,255,0.03); }
+
+.mesh-link-from, .mesh-link-to {
+  font-weight: 600;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+.mesh-link-arrow {
+  color: var(--dim2);
+  font-size: 0.8rem;
+}
+.mesh-link-rates {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--dim);
+  flex-wrap: wrap;
+}
+.mesh-link-rates span { white-space: nowrap; }
+.mesh-rssi {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--dim2);
+}
+#mesh-updated {
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  color: var(--dim2);
+  margin-top: 6px;
+  padding-left: 2px;
+}
+
+/* ===== FOOTER ===== */
+footer {
+  font-size: 0.72rem;
+  color: var(--dim2);
+  text-align: center;
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border2);
+  font-family: var(--mono);
+}
+
+/* ===== SCROLL ===== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+
+/* ===== TOOLTIP ===== */
+[data-tip] { position: relative; }
+[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: rgba(10,12,20,0.95);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.7rem;
+  font-family: var(--mono);
+  padding: 4px 8px;
+  border-radius: 5px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* ===== SPINNER ===== */
+.spin {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(168,85,247,0.2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* empty state */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--dim);
+  font-size: 0.82rem;
+}
+.empty-state strong { display: block; color: var(--dim2); font-family: var(--mono); margin-bottom: 6px; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo-mark">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M5.636 5.636a9 9 0 1 0 12.728 0"/>
+        <path d="M8.464 8.464a5 5 0 1 0 7.072 0"/>
+      </svg>
+      <h1>FritzTrack4U <span>Cockpit</span></h1>
+      <span class="badge-debug">live</span>
+    </div>
+
+    <div class="header-right">
+      <span id="mock-badge" class="mock-badge" style="display:none;">MOCK-MODUS</span>
+
+      <span class="live-dot">
+        <span class="dot" id="dot"></span>
+        <span id="live-label">Verbinde...</span>
+      </span>
+
+      <div class="ctrl-group">
+        <label for="interval-sel">Intervall</label>
+        <select id="interval-sel">
+          <option value="1000" selected>1 s</option>
+          <option value="2000">2 s</option>
+          <option value="3000">3 s</option>
+          <option value="5000">5 s</option>
+          <option value="10000">10 s</option>
+          <option value="30000">30 s</option>
+        </select>
+      </div>
+
+      <button id="pause-btn" class="primary">Pause</button>
+    </div>
+  </header>
+
+  <!-- OFFLINE BANNER -->
+  <div id="offline-banner">
+    <strong>Daemon nicht erreichbar</strong>
+    Starte den Debug-Server: <code>python fritztrack4u.py --live</code><br>
+    Der Server lauscht auf <code>http://127.0.0.1:8099</code>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div id="status-bar">
+    <span id="sb-updated">Letzte Daten: —</span>
+    <span id="sb-age">Alter: —</span>
+    <span id="sb-persons">Personen: —</span>
+    <span id="sb-boxes">Boxen: —</span>
+  </div>
+
+  <!-- TAB NAV -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="tab-persons">Personen</button>
+    <button class="tab-btn" data-tab="tab-boxes">Boxen (Live)</button>
+    <button class="tab-btn" data-tab="tab-mesh">Mesh</button>
+  </nav>
+
+  <!-- TAB: PERSONEN -->
+  <div id="tab-persons" class="tab-panel active">
+    <section id="live-section">
+      <div class="section-title">Live-Positionen</div>
+      <div class="card">
+        <div class="table-wrap" id="live-table-wrap">
+          <div class="empty-state">
+            <strong>Wird geladen...</strong>
+            Warte auf ersten Poll
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="history-section">
+      <div class="section-title">Verlauf</div>
+      <div class="card" id="history-panel">
+        <div class="history-header">
+          <h2>Verlauf: <span id="hist-name">—</span></h2>
+          <span class="history-loading" id="hist-loading" style="display:none;"><span class="spin"></span> Lade...</span>
+          <button class="close-btn" id="hist-close">Schliessen</button>
+        </div>
+        <div class="history-body" id="hist-body">
+          <!-- filled by JS -->
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB: BOXEN LIVE -->
+  <div id="tab-boxes" class="tab-panel">
+    <div class="section-title">Boxen — Live-Status</div>
+    <div id="box-live-wrap">
+      <div class="empty-state">
+        <strong>Wird geladen...</strong>
+        Warte auf ersten Poll
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: MESH -->
+  <div id="tab-mesh" class="tab-panel">
+    <div class="section-title">Mesh-Topologie</div>
+    <div id="mesh-wrap">
+      <div class="empty-state">
+        <strong>Wird geladen...</strong>
+        Warte auf ersten Poll
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    FritzTrack4U — Live Cockpit &nbsp;|&nbsp; Polling: <span id="foot-interval">1</span>s
+  </footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ================================================================
+     MOCK DATA
+  ================================================================ */
+  const MOCK_BOXES = {
+    boxes: [
+      { name: "FritzBox",          floor: "Erdgeschoss", floor_nr: 0 },
+      { name: "Repeater Kueche",   floor: "Erdgeschoss", floor_nr: 0 },
+      { name: "Repeater OG",       floor: "Obergeschoss", floor_nr: 1 },
+    ],
+    floors: [
+      { floor: "Erdgeschoss",  floor_nr: 0 },
+      { floor: "Obergeschoss", floor_nr: 1 },
+    ],
+    persons: ["Murat", "Fatma"]
+  };
+
+  const MOCK_LIVE = {
+    updated: new Date().toISOString(),
+    persons: [
+      {
+        name: "Murat",
+        floor: "Erdgeschoss",
+        room: "Kueche",
+        score: 4.2,
+        away: false,
+        ts: new Date().toISOString(),
+        vector: { "FritzBox": 72, "Repeater Kueche": 91, "Repeater OG": 38 }
+      },
+      {
+        name: "Fatma",
+        floor: "Obergeschoss",
+        room: "Schlafzimmer",
+        score: 11.8,
+        away: false,
+        ts: new Date(Date.now() - 8000).toISOString(),
+        vector: { "FritzBox": 45, "Repeater Kueche": 22, "Repeater OG": 87 }
+      }
+    ]
+  };
+
+  /* Mock /api/box_live — 3 Boxen auf 2 Etagen, 1 unreachable */
+  function makeMockBoxLive() {
+    return {
+      updated: new Date().toISOString(),
+      boxes: [
+        {
+          name: "FritzBox",
+          floor: "Erdgeschoss",
+          floor_nr: 0,
+          reachable: true,
+          device_count: 4,
+          ts: new Date().toISOString(),
+          devices: [
+            { mac: "AA:BB:CC:11:22:33", signal: 91, active: true,  name: "Murat" },
+            { mac: "AA:BB:CC:11:22:44", signal: 64, active: true,  name: "Fatma" },
+            { mac: "DE:AD:BE:EF:00:01", signal: 43, active: false, name: null },
+            { mac: "DE:AD:BE:EF:00:02", signal: 29, active: false, name: null }
+          ]
+        },
+        {
+          name: "Repeater Kueche",
+          floor: "Erdgeschoss",
+          floor_nr: 0,
+          reachable: false,
+          device_count: 0,
+          ts: new Date(Date.now() - 45000).toISOString(),
+          devices: []
+        },
+        {
+          name: "Repeater OG",
+          floor: "Obergeschoss",
+          floor_nr: 1,
+          reachable: true,
+          device_count: 2,
+          ts: new Date().toISOString(),
+          devices: [
+            { mac: "AA:BB:CC:11:22:44", signal: 87, active: true,  name: "Fatma" },
+            { mac: "DE:AD:BE:EF:00:03", signal: 52, active: true,  name: "Gast-Handy" }
+          ]
+        }
+      ]
+    };
+  }
+
+  /* Mock /api/mesh — available=true, 1 router + 2 repeater, links */
+  function makeMockMesh() {
+    return {
+      updated: new Date().toISOString(),
+      available: true,
+      nodes: [
+        { name: "FRITZ!Box 7590",      mac: "AA:BB:CC:DD:EE:01", is_master: true,  type: "router",   model: "7590 AX" },
+        { name: "FRITZ!Repeater 2400", mac: "AA:BB:CC:DD:EE:02", is_master: false, type: "repeater", model: "2400" },
+        { name: "FRITZ!Repeater 1200", mac: "AA:BB:CC:DD:EE:03", is_master: false, type: "repeater", model: "1200 AX" }
+      ],
+      links: [
+        { from_mac: "AA:BB:CC:DD:EE:01", to_mac: "AA:BB:CC:DD:EE:02", rx_rate: 866700, tx_rate: 866700, rssi: -48 },
+        { from_mac: "AA:BB:CC:DD:EE:01", to_mac: "AA:BB:CC:DD:EE:03", rx_rate: 433300, tx_rate: 433300, rssi: -62 }
+      ]
+    };
+  }
+
+  function makeMockHistory(name) {
+    const entries = [];
+    const rooms = name === "Murat"
+      ? ["Kueche", "Wohnzimmer", "Flur", null]
+      : ["Schlafzimmer", "Bad", "Wohnzimmer"];
+    const floors = ["Erdgeschoss", "Obergeschoss"];
+    const now = Date.now();
+    for (let i = 0; i < 40; i++) {
+      const away = i % 12 === 0;
+      entries.push({
+        ts: new Date(now - i * 95000).toISOString(),
+        floor: away ? null : floors[Math.floor(Math.random() * floors.length)],
+        room:  away ? null : rooms[Math.floor(Math.random() * rooms.length)],
+        away:  away
+      });
+    }
+    return { name, entries };
+  }
+
+  /* ================================================================
+     STATE
+  ================================================================ */
+  const isMock = new URLSearchParams(location.search).has('mock');
+
+  // localStorage key for box visibility
+  const LS_KEY = 'fritztrack4u_box_visible';
+
+  function loadBoxVisibility() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; }
+  }
+  function saveBoxVisibility(map) {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(map)); } catch {}
+  }
+
+  let state = {
+    boxes:        null,
+    live:         null,
+    boxLive:      null,
+    mesh:         null,
+    lastFetch:    null,
+    paused:       false,
+    interval:     1000,
+    timer:        null,
+    stale:        false,
+    offline:      false,
+    histPerson:   null,
+    meshTimer:    null,
+    meshInterval: 15000,
+    boxVisible:   loadBoxVisibility()   // { "BoxName": true|false }
+  };
+
+  /* ================================================================
+     DOM refs
+  ================================================================ */
+  const dot           = document.getElementById('dot');
+  const liveLabel     = document.getElementById('live-label');
+  const offlineBanner = document.getElementById('offline-banner');
+  const sbUpdated     = document.getElementById('sb-updated');
+  const sbAge         = document.getElementById('sb-age');
+  const sbPersons     = document.getElementById('sb-persons');
+  const sbBoxes       = document.getElementById('sb-boxes');
+  const liveWrap      = document.getElementById('live-table-wrap');
+  const histPanel     = document.getElementById('history-panel');
+  const histName      = document.getElementById('hist-name');
+  const histLoading   = document.getElementById('hist-loading');
+  const histBody      = document.getElementById('hist-body');
+  const histClose     = document.getElementById('hist-close');
+  const pauseBtn      = document.getElementById('pause-btn');
+  const intervalSel   = document.getElementById('interval-sel');
+  const footInterval  = document.getElementById('foot-interval');
+  const mockBadge     = document.getElementById('mock-badge');
+  const boxLiveWrap   = document.getElementById('box-live-wrap');
+  const meshWrap      = document.getElementById('mesh-wrap');
+
+  if (isMock) mockBadge.style.display = '';
+
+  /* ================================================================
+     TAB NAVIGATION
+  ================================================================ */
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabId = btn.dataset.tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    });
+  });
+
+  /* ================================================================
+     FETCH helpers
+  ================================================================ */
+  async function fetchJSON(path) {
+    const url = 'http://127.0.0.1:8099' + path;
+    const r = await fetch(url, { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }
+
+  async function fetchBoxes() {
+    if (isMock) return MOCK_BOXES;
+    return fetchJSON('/api/boxes');
+  }
+
+  async function fetchLive() {
+    if (isMock) {
+      MOCK_LIVE.updated = new Date().toISOString();
+      MOCK_LIVE.persons.forEach(p => { p.ts = new Date().toISOString(); });
+      return JSON.parse(JSON.stringify(MOCK_LIVE));
+    }
+    return fetchJSON('/api/live');
+  }
+
+  async function fetchBoxLive() {
+    if (isMock) return makeMockBoxLive();
+    return fetchJSON('/api/box_live');
+  }
+
+  async function fetchMesh() {
+    if (isMock) return makeMockMesh();
+    return fetchJSON('/api/mesh');
+  }
+
+  async function fetchHistory(name, limit) {
+    if (isMock) return makeMockHistory(name);
+    const enc = encodeURIComponent(name);
+    return fetchJSON('/api/history?name=' + enc + '&limit=' + (limit || 200));
+  }
+
+  // fire-and-forget box toggle
+  function callBoxToggle(boxName, visible) {
+    if (isMock) return;
+    const url = 'http://127.0.0.1:8099/api/box_toggle?box=' + encodeURIComponent(boxName) + '&show=' + (visible ? 'true' : 'false');
+    fetch(url, { cache: 'no-store' }).catch(() => {});
+  }
+
+  /* ================================================================
+     HELPERS
+  ================================================================ */
+  function esc(s) {
+    if (s == null) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function nullDash(v) {
+    if (v == null || v === '') return '<span class="null-val">—</span>';
+    return esc(String(v));
+  }
+
+  function formatTS(ts) {
+    if (!ts) return '—';
+    try {
+      const d = new Date(ts);
+      return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    } catch { return ts; }
+  }
+
+  function formatTSFull(ts) {
+    if (!ts) return '—';
+    try {
+      const d = new Date(ts);
+      return d.toLocaleString('de-DE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    } catch { return ts; }
+  }
+
+  function ageSeconds(ts) {
+    if (!ts) return Infinity;
+    return (Date.now() - new Date(ts).getTime()) / 1000;
+  }
+
+  function scoreClass(score) {
+    if (score == null) return 'none';
+    if (score < 8)   return 'good';
+    if (score <= 15) return 'warn';
+    return 'bad';
+  }
+
+  function scoreLabel(score) {
+    if (score == null) return '—';
+    return score.toFixed(1);
+  }
+
+  function sigBarClass(pct) {
+    if (pct >= 70) return 'strong';
+    if (pct >= 40) return 'medium';
+    return 'weak';
+  }
+
+  function kbitToMbit(kbit) {
+    if (kbit == null) return '—';
+    return (kbit / 1000).toFixed(1) + ' Mbit/s';
+  }
+
+  /* ================================================================
+     BUILD PERSONS TABLE (existing logic, unchanged)
+  ================================================================ */
+  function buildTable(boxes_data, live_data) {
+    if (!boxes_data || !live_data) return;
+
+    const boxes   = boxes_data.boxes   || [];
+    const floors  = boxes_data.floors  || [];
+    const persons = live_data.persons  || [];
+
+    const sortedBoxes = [...boxes].sort((a, b) => {
+      if ((a.floor_nr ?? 99) !== (b.floor_nr ?? 99)) return (a.floor_nr ?? 99) - (b.floor_nr ?? 99);
+      return a.name.localeCompare(b.name);
+    });
+
+    const floorGroups = [];
+    const floorMap = {};
+    sortedBoxes.forEach(box => {
+      const fnr = box.floor_nr ?? 99;
+      if (!floorMap[fnr]) {
+        floorMap[fnr] = { floor: box.floor, floor_nr: fnr, boxes: [] };
+        floorGroups.push(floorMap[fnr]);
+      }
+      floorMap[fnr].boxes.push(box);
+    });
+
+    const sortedPersons = [...persons].sort((a, b) => {
+      if (a.away === b.away) return a.name.localeCompare(b.name);
+      return a.away ? 1 : -1;
+    });
+
+    function strongestBox(person) {
+      const v = person.vector || {};
+      let best = null, bestVal = -Infinity;
+      for (const [k, val] of Object.entries(v)) {
+        if (val > bestVal) { bestVal = val; best = k; }
+      }
+      return best;
+    }
+
+    let thead = '<thead><tr>';
+    thead += '<th style="min-width:110px;">Person</th>';
+    floorGroups.forEach(fg => {
+      thead += `<th class="floor-header" colspan="${fg.boxes.length}" style="text-align:center;">${esc(fg.floor)} (${fg.boxes.length} Box${fg.boxes.length !== 1 ? 'en' : ''})</th>`;
+    });
+    thead += '<th style="min-width:120px;">Etage</th>';
+    thead += '<th style="min-width:120px;">Raum</th>';
+    thead += '<th class="score-cell" data-tip="niedriger = besser (0 = perfekter Match)" style="min-width:90px;cursor:help;">Score</th>';
+    thead += '<th style="min-width:70px;">Status</th>';
+    thead += '</tr>';
+
+    thead += '<tr>';
+    thead += '<th style="background:rgba(255,255,255,0.03);"></th>';
+    sortedBoxes.forEach(box => {
+      thead += `<th style="text-align:right;">${esc(box.name)}</th>`;
+    });
+    thead += '<th></th><th></th><th></th><th></th>';
+    thead += '</tr></thead>';
+
+    let tbody = '<tbody>';
+    if (sortedPersons.length === 0) {
+      const totalCols = 1 + sortedBoxes.length + 4;
+      tbody += `<tr><td colspan="${totalCols}" class="empty-state">Keine Personen-Daten</td></tr>`;
+    } else {
+      sortedPersons.forEach(person => {
+        const vec    = person.vector || {};
+        const sbName = strongestBox(person);
+        const away   = !!person.away;
+        const rowClass = away ? 'away' : '';
+
+        tbody += `<tr class="${rowClass}">`;
+        tbody += `<td class="person-name" data-person="${esc(person.name)}" onclick="window._showHistory('${esc(person.name)}')">${esc(person.name)}</td>`;
+
+        sortedBoxes.forEach(box => {
+          const val = vec[box.name];
+          if (val == null) {
+            tbody += `<td class="signal no-sig">—</td>`;
+          } else {
+            const isBest = box.name === sbName && !away;
+            const cls    = 'signal' + (isBest ? ' strongest' : '');
+            const tip    = isBest ? 'Stärkste Box (bestimmt Etage)' : '';
+            tbody += `<td class="${cls}"${tip ? ` data-tip="${tip}"` : ''}>${val}%</td>`;
+          }
+        });
+
+        tbody += `<td>${nullDash(person.floor)}</td>`;
+        tbody += `<td>${nullDash(person.room)}</td>`;
+
+        const sc  = person.score;
+        const scC = away ? 'none' : scoreClass(sc);
+        const scL = away ? '—' : scoreLabel(sc);
+        tbody += `<td class="score-cell"><span class="score-badge ${scC}" data-tip="niedriger = besser">${scL}</span></td>`;
+
+        tbody += `<td>${away ? '<span class="away-pill">weg</span>' : '<span class="here-pill">hier</span>'}</td>`;
+        tbody += '</tr>';
+      });
+    }
+    tbody += '</tbody>';
+
+    liveWrap.innerHTML = `<table>${thead}${tbody}</table>`;
+  }
+
+  /* ================================================================
+     BUILD BOX LIVE SECTION
+  ================================================================ */
+  function buildBoxLive(data) {
+    if (!data || !data.boxes) return;
+
+    const boxes = [...data.boxes].sort((a, b) => {
+      if ((a.floor_nr ?? 99) !== (b.floor_nr ?? 99)) return (a.floor_nr ?? 99) - (b.floor_nr ?? 99);
+      return a.name.localeCompare(b.name);
+    });
+
+    // group by floor
+    const floorGroups = [];
+    const floorMap = {};
+    boxes.forEach(box => {
+      const key = box.floor_nr ?? 99;
+      if (!floorMap[key]) {
+        floorMap[key] = { floor: box.floor || 'Unbekannt', floor_nr: key, boxes: [] };
+        floorGroups.push(floorMap[key]);
+      }
+      floorMap[key].boxes.push(box);
+    });
+
+    let html = '';
+
+    floorGroups.forEach(fg => {
+      html += `<div class="floor-group-label">${esc(fg.floor)}</div>`;
+      html += '<div class="box-grid">';
+
+      fg.boxes.forEach(box => {
+        const visible = state.boxVisible[box.name] !== false; // default true
+        const reachable = box.reachable;
+
+        let ampelCls = 'waiting', statusLbl = 'wartet', statusCls = 'waiting';
+        if (reachable === true)  { ampelCls = 'ok';  statusLbl = 'erreichbar';     statusCls = 'ok'; }
+        if (reachable === false) { ampelCls = 'bad'; statusLbl = 'nicht erreichbar'; statusCls = 'bad'; }
+
+        const cardCls = [
+          'box-card',
+          reachable === false ? 'unreachable' : '',
+          !visible ? 'hidden-box' : ''
+        ].filter(Boolean).join(' ');
+
+        const btnCls  = visible ? 'box-toggle-btn stop-btn' : 'box-toggle-btn start-btn';
+        const btnText = visible ? 'Stopp' : 'Start';
+        const bodyCollapsed = visible ? '' : 'collapsed';
+
+        const devices = box.devices || [];
+        // find highest signal
+        let maxSig = -1;
+        devices.forEach(d => { if (d.signal > maxSig) maxSig = d.signal; });
+
+        html += `<div class="${cardCls}" id="boxcard-${esc(box.name).replace(/\s+/g,'_')}">`;
+        html += `<div class="box-card-head">`;
+        html += `<span class="box-ampel ${ampelCls}"></span>`;
+        html += `<span class="box-name">${esc(box.name)}</span>`;
+        html += `<span class="box-meta">${box.device_count != null ? box.device_count + ' Ger.' : '—'}</span>`;
+        html += `<span class="box-status-label ${statusCls}">${statusLbl}</span>`;
+        html += `<button class="${btnCls}" onclick="window._toggleBox('${esc(box.name)}')">${btnText}</button>`;
+        html += `</div>`; // box-card-head
+
+        html += `<div class="box-body ${bodyCollapsed}" id="boxbody-${esc(box.name).replace(/\s+/g,'_')}">`;
+
+        if (reachable === false) {
+          html += `<div class="box-unreachable-msg">`;
+          html += `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+          html += `Box nicht erreichbar — letzter Kontakt: ${box.ts ? formatTS(box.ts) : '—'}`;
+          html += `</div>`;
+        } else if (devices.length === 0) {
+          html += `<div class="empty-state" style="padding:20px;"><strong>Keine Geräte</strong>Keine Geräte verbunden</div>`;
+        } else {
+          html += `<div class="table-wrap"><table class="dev-tbl">`;
+          html += `<thead><tr><th>Name</th><th>MAC</th><th>Signal</th><th>Aktiv</th></tr></thead>`;
+          html += `<tbody>`;
+
+          // sort: tracked first, then by signal desc
+          const sortedDevs = [...devices].sort((a, b) => {
+            if ((a.name != null) !== (b.name != null)) return a.name != null ? -1 : 1;
+            return b.signal - a.signal;
+          });
+
+          sortedDevs.forEach(dev => {
+            const isMax = dev.signal === maxSig && maxSig >= 0;
+            const nameCls = dev.name ? 'dev-name-tracked' : 'dev-name-unknown';
+            const nameStr = dev.name ? esc(dev.name) : '<span class="null-val">—</span>';
+            const sigCls  = sigBarClass(dev.signal || 0);
+
+            html += `<tr${isMax ? ' style="background:rgba(52,199,89,0.04);"' : ''}>`;
+            html += `<td class="${nameCls}">${nameStr}</td>`;
+            html += `<td style="font-family:var(--mono);font-size:0.68rem;color:var(--dim2);">${esc(dev.mac)}</td>`;
+            html += `<td>`;
+            html += `<div class="sig-bar-wrap">`;
+            html += `<div class="sig-bar"><div class="sig-bar-fill ${sigCls}" style="width:${dev.signal || 0}%;"></div></div>`;
+            html += `<span class="sig-pct ${isMax ? 'strong' : ''}">${dev.signal != null ? dev.signal + '%' : '—'}</span>`;
+            html += `</div>`;
+            html += `</td>`;
+            html += `<td><span class="active-pill ${dev.active ? 'yes' : 'no'}">${dev.active ? 'ja' : 'nein'}</span></td>`;
+            html += `</tr>`;
+          });
+
+          html += `</tbody></table></div>`;
+        }
+
+        html += `</div>`; // box-body
+        html += `</div>`; // box-card
+      });
+
+      html += '</div>'; // box-grid
+    });
+
+    boxLiveWrap.innerHTML = html;
+  }
+
+  /* ================================================================
+     BOX TOGGLE (Start/Stopp visibility)
+  ================================================================ */
+  window._toggleBox = function(boxName) {
+    const current = state.boxVisible[boxName] !== false;
+    const newVisible = !current;
+    state.boxVisible[boxName] = newVisible;
+    saveBoxVisibility(state.boxVisible);
+
+    // call server fire-and-forget
+    callBoxToggle(boxName, newVisible);
+
+    // update DOM directly without full re-render
+    const safeId = boxName.replace(/\s+/g,'_');
+    const card   = document.getElementById('boxcard-' + safeId);
+    const body   = document.getElementById('boxbody-' + safeId);
+    if (!card || !body) return;
+
+    const btn = card.querySelector('.box-toggle-btn');
+    if (newVisible) {
+      card.classList.remove('hidden-box');
+      body.classList.remove('collapsed');
+      if (btn) { btn.textContent = 'Stopp'; btn.className = 'box-toggle-btn stop-btn'; }
+    } else {
+      card.classList.add('hidden-box');
+      body.classList.add('collapsed');
+      if (btn) { btn.textContent = 'Start'; btn.className = 'box-toggle-btn start-btn'; }
+    }
+  };
+
+  /* ================================================================
+     BUILD MESH SECTION
+  ================================================================ */
+  function buildMesh(data) {
+    if (!data) return;
+
+    if (!data.available) {
+      meshWrap.innerHTML = `
+        <div class="mesh-unavail">
+          <strong>Keine Mesh-Daten</strong>
+          Nur die Mesh-Master-Box liefert Topologie-Daten. Repeater stellen diese Informationen oft nicht bereit.
+          Sobald die Master-Box Mesh-Daten liefert, erscheinen sie hier automatisch.
+        </div>
+      `;
+      return;
+    }
+
+    const nodes = data.nodes || [];
+    const links = data.links || [];
+
+    // build mac -> name lookup
+    const macName = {};
+    nodes.forEach(n => { macName[n.mac] = n.name; });
+
+    let html = '<div class="mesh-grid">';
+
+    // nodes panel
+    html += '<div class="mesh-nodes-wrap">';
+    html += '<div class="mesh-sub-head">Knoten (' + nodes.length + ')</div>';
+    nodes.forEach(n => {
+      const typeCls = n.type in { router:1, repeater:1, client:1 } ? n.type : 'unknown';
+      const typeLabel = n.type || 'unbekannt';
+      html += '<div class="mesh-node-row">';
+      html += `<span class="mesh-node-type ${typeCls}">${esc(typeLabel)}</span>`;
+      html += `<span class="mesh-node-name">${esc(n.name)}</span>`;
+      if (n.is_master) html += `<span class="mesh-master-badge">MASTER</span>`;
+      if (n.model)     html += `<span class="mesh-node-model">${esc(n.model)}</span>`;
+      html += `<span class="mesh-node-mac">${esc(n.mac)}</span>`;
+      html += '</div>';
+    });
+    html += '</div>'; // mesh-nodes-wrap
+
+    // links panel
+    html += '<div class="mesh-links-wrap">';
+    html += '<div class="mesh-sub-head">Verbindungen (' + links.length + ')</div>';
+    if (links.length === 0) {
+      html += '<div class="empty-state" style="padding:20px;"><strong>Keine Links</strong>Keine Verbindungsdaten</div>';
+    } else {
+      links.forEach(l => {
+        const fromName = macName[l.from_mac] || l.from_mac;
+        const toName   = macName[l.to_mac]   || l.to_mac;
+        html += '<div class="mesh-link-row">';
+        html += `<span class="mesh-link-from">${esc(fromName)}</span>`;
+        html += `<span class="mesh-link-arrow">&#8594;</span>`;
+        html += `<span class="mesh-link-to">${esc(toName)}</span>`;
+        html += '<div class="mesh-link-rates">';
+        if (l.rx_rate != null) html += `<span>RX ${kbitToMbit(l.rx_rate)}</span>`;
+        if (l.tx_rate != null) html += `<span>TX ${kbitToMbit(l.tx_rate)}</span>`;
+        if (l.rssi    != null) html += `<span class="mesh-rssi">RSSI ${l.rssi} dBm</span>`;
+        html += '</div>';
+        html += '</div>';
+      });
+    }
+    html += '</div>'; // mesh-links-wrap
+
+    html += '</div>'; // mesh-grid
+
+    if (data.updated) {
+      html += `<div id="mesh-updated">Stand: ${formatTSFull(data.updated)}</div>`;
+    }
+
+    meshWrap.innerHTML = html;
+  }
+
+  /* ================================================================
+     STATUS BAR + DOT update
+  ================================================================ */
+  function updateStatus(live_data) {
+    const updatedTS = live_data && live_data.updated ? live_data.updated : null;
+    const age = ageSeconds(updatedTS);
+
+    sbUpdated.textContent = 'Letzte Daten: ' + (updatedTS ? formatTSFull(updatedTS) : '—');
+    sbAge.textContent     = 'Alter: ' + (isFinite(age) ? Math.round(age) + 's' : '—');
+
+    const persons = live_data && live_data.persons ? live_data.persons : [];
+    sbPersons.textContent = 'Personen: ' + persons.length + ' (' + persons.filter(p => !p.away).length + ' hier)';
+
+    let boxCount = '—';
+    if (state.boxLive && state.boxLive.boxes) {
+      boxCount = state.boxLive.boxes.length + ' (' + state.boxLive.boxes.filter(b => b.reachable === true).length + ' online)';
+    } else if (state.boxes && state.boxes.boxes) {
+      boxCount = state.boxes.boxes.length;
+    }
+    sbBoxes.textContent = 'Boxen: ' + boxCount;
+
+    if (state.offline) {
+      dot.className = 'dot dead';
+      liveLabel.textContent = 'Offline';
+    } else if (age > state.interval / 1000 * 3.5) {
+      dot.className = 'dot stale';
+      liveLabel.textContent = 'Veralt (' + Math.round(age) + 's)';
+    } else {
+      dot.className = 'dot';
+      liveLabel.textContent = 'vor ' + Math.round(age) + 's';
+    }
+  }
+
+  function setOffline(err) {
+    state.offline = true;
+    offlineBanner.classList.add('visible');
+    dot.className = 'dot dead';
+    liveLabel.textContent = 'Offline';
+    // mark all sections offline
+    if (!liveWrap.querySelector('.offline-notice')) {
+      // don't overwrite table once rendered — leave stale data visible
+    }
+    console.warn('[fritztrack4u] fetch error:', err);
+  }
+
+  function setOnline() {
+    state.offline = false;
+    offlineBanner.classList.remove('visible');
+  }
+
+  /* ================================================================
+     POLL
+  ================================================================ */
+  async function poll() {
+    if (state.paused) return;
+
+    try {
+      // fetch boxes once
+      if (!state.boxes) {
+        state.boxes = await fetchBoxes();
+      }
+
+      // parallel: live + box_live
+      const [live, boxLive] = await Promise.all([
+        fetchLive(),
+        fetchBoxLive()
+      ]);
+
+      state.live    = live;
+      state.boxLive = boxLive;
+      state.lastFetch = new Date();
+      setOnline();
+
+      buildTable(state.boxes, live);
+      buildBoxLive(boxLive);
+      updateStatus(live);
+    } catch (err) {
+      setOffline(err);
+      updateStatus(state.live);
+    }
+  }
+
+  async function pollMesh() {
+    if (state.paused) return;
+    try {
+      const mesh = await fetchMesh();
+      state.mesh = mesh;
+      buildMesh(mesh);
+    } catch (err) {
+      // mesh failure non-critical — don't trigger offline banner
+      if (!state.mesh) {
+        meshWrap.innerHTML = '<div class="mesh-unavail"><strong>Nicht erreichbar</strong>Mesh-Endpunkt antwortet nicht.</div>';
+      }
+    }
+  }
+
+  function startTimer() {
+    if (state.timer) clearInterval(state.timer);
+    state.timer = setInterval(poll, state.interval);
+  }
+
+  function startMeshTimer() {
+    if (state.meshTimer) clearInterval(state.meshTimer);
+    state.meshTimer = setInterval(pollMesh, state.meshInterval);
+  }
+
+  /* ================================================================
+     HISTORY
+  ================================================================ */
+  window._showHistory = async function (name) {
+    state.histPerson = name;
+    histName.textContent = name;
+    histPanel.classList.add('visible');
+    histBody.innerHTML = '';
+    histLoading.style.display = '';
+
+    try {
+      const data = await fetchHistory(name, 200);
+      histLoading.style.display = 'none';
+      renderHistory(data);
+    } catch (err) {
+      histLoading.style.display = 'none';
+      histBody.innerHTML = '<div class="empty-state"><strong>Fehler</strong>Verlauf konnte nicht geladen werden</div>';
+    }
+
+    histPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  function renderHistory(data) {
+    const entries = data.entries || [];
+    if (entries.length === 0) {
+      histBody.innerHTML = '<div class="empty-state"><strong>Leer</strong>Kein Verlauf vorhanden</div>';
+      return;
+    }
+
+    const reversed = [...entries].reverse();
+    const segments = reversed.map(e => {
+      let cls = e.away ? 'away' : 'here';
+      return `<div class="tl-seg ${cls}" data-tip="${esc(formatTSFull(e.ts))} &mdash; ${esc(e.floor || 'weg')}"></div>`;
+    }).join('');
+
+    const changes = [];
+    let prev = null;
+    for (const e of entries) {
+      const key = (e.floor || '') + '|' + (e.room || '') + '|' + (e.away ? '1' : '0');
+      if (key !== prev) {
+        changes.push(e);
+        prev = key;
+      }
+    }
+
+    let html = '';
+    html += `<div class="timeline-wrap">${segments}</div>`;
+    html += `<p style="font-size:0.7rem;color:var(--dim2);font-family:var(--mono);margin-bottom:10px;">Zeitband: ${entries.length} Eintraege — Gruen=hier, Rot=weg (links=aelteste, rechts=neuste)</p>`;
+    html += `<p style="font-size:0.72rem;color:var(--dim);margin-bottom:6px;">${changes.length} Positionswechsel</p>`;
+    html += '<div class="history-table-wrap"><table class="hist">';
+    html += '<thead><tr><th>Zeit</th><th>Etage</th><th>Raum</th><th>Status</th></tr></thead><tbody>';
+
+    changes.forEach(e => {
+      html += '<tr>';
+      html += `<td>${esc(formatTSFull(e.ts))}</td>`;
+      html += `<td>${nullDash(e.floor)}</td>`;
+      html += `<td>${nullDash(e.room)}</td>`;
+      html += `<td>${e.away ? '<span class="away-pill">weg</span>' : '<span class="here-pill">hier</span>'}</td>`;
+      html += '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    histBody.innerHTML = html;
+  }
+
+  histClose.addEventListener('click', () => {
+    histPanel.classList.remove('visible');
+    state.histPerson = null;
+    histName.textContent = '—';
+    histBody.innerHTML = '';
+  });
+
+  /* ================================================================
+     CONTROLS
+  ================================================================ */
+  pauseBtn.addEventListener('click', () => {
+    state.paused = !state.paused;
+    if (state.paused) {
+      pauseBtn.textContent = 'Fortsetzen';
+      pauseBtn.classList.remove('primary');
+      pauseBtn.classList.add('paused');
+      dot.className = 'dot stale';
+      liveLabel.textContent = 'Pausiert';
+    } else {
+      pauseBtn.textContent = 'Pause';
+      pauseBtn.classList.add('primary');
+      pauseBtn.classList.remove('paused');
+      poll();
+      pollMesh();
+    }
+  });
+
+  intervalSel.addEventListener('change', () => {
+    state.interval = parseInt(intervalSel.value, 10);
+    footInterval.textContent = state.interval / 1000;
+    startTimer();
+    if (!state.paused) poll();
+  });
+
+  /* ================================================================
+     INIT
+  ================================================================ */
+  poll();
+  pollMesh();
+  startTimer();
+  startMeshTimer();
+
+})();
+</script>
+</body>
+</html>

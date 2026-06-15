@@ -193,6 +193,45 @@
     .nav-links{display:none;}
   }
 </style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Kann man mit WLAN wirklich Menschen orten?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Nur sehr begrenzt. Man ortet nicht den Menschen, sondern dessen Handy — und das auch nur raum-grob im eigenen Netz. Keine cm-Genauigkeit, kein Verfolgen Fremder, kein Blick durch Wände." }
+    },
+    {
+      "@type": "Question",
+      "name": "Warum liefert die FritzBox nur einen dBm-Wert pro Handy?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Weil sie nur die Verbindung zu der Box meldet, mit der das Handy aktuell verbunden ist. Ohne mindestens drei Abstandswerte ist klassische Triangulation physikalisch nicht möglich. Der Workaround: jede Box einzeln einloggen und separat abfragen." }
+    },
+    {
+      "@type": "Question",
+      "name": "Wie genau ist die Indoor Ortung per WLAN?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Raum-Ebene. Das System erkennt grob, in welchem Raum ein Gerät ist — nicht die exakte Position. Für Heim-Automatisierung reicht das; für cm-genaues Tracking braucht man andere Technik wie BLE-Beacons." }
+    },
+    {
+      "@type": "Question",
+      "name": "Kann ich damit fremde Personen oder Mitarbeiter orten?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Nein — und das ist auch nicht erlaubt. Das Projekt ist ausschließlich für das eigene Zuhause und die eigenen Bewohner gedacht." }
+    },
+    {
+      "@type": "Question",
+      "name": "Ist das Projekt Open Source und kostenlos?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Ja. FritzTrack4U liegt offen auf GitHub unter MIT-Lizenz. Du kannst den Code lesen, anpassen und selbst betreiben." }
+    },
+    {
+      "@type": "Question",
+      "name": "Ist FritzTrack4U ein Produkt von AVM oder FRITZ!?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Nein. Es ist ein unabhängiges Hobby-/Open-Source-Projekt und steht in keiner Verbindung zu AVM bzw. der FRITZ! GmbH." }
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
