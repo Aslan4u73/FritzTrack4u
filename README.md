@@ -54,9 +54,9 @@
 
 GPS funktioniert draussen perfekt und drinnen gar nicht. Genau im Haus willst du aber wissen, wer wo ist. FritzTrack4U loest das mit einem einzigen Gedanken:
 
-> **Jede FritzBox misst dasselbe Handy GLEICHZEITIG — mit ihrer eigenen Signalstaerke.**
+> **Mehrere FritzBoxen ergeben gemeinsam ein Signal-Muster — verglichen gegen vorher eingelernte Raum-Profile.**
 
-Ein Handy in einem Raum erzeugt nicht *einen* Wert, sondern einen **Vektor** ueber alle Boxen. Die staerkste Box verraet die **Etage**. Der **volle Vektor** verraet den **Raum**. Und der Vergleich laeuft gegen kalibrierte Raum-Fingerprints — ueber **alle** Boxen, nicht nur die staerkste.
+Ein Handy haengt zu jedem Zeitpunkt an *einer* Box — aber ueber kurze Zeit und mehrere Boxen-Standorte entsteht ein **Signal-Muster** (Vektor). Welche Box es haelt, verraet die **Etage**; das Muster, verglichen gegen eingelernte Raum-Fingerprints, verraet den **Raum**.
 
 ```mermaid
 flowchart LR
@@ -65,15 +65,15 @@ flowchart LR
     P -. "mittel" .-> B2["📡 Box B<br/>40%"]
     P -. "schwach" .-> B3["📡 Box C<br/>15%"]
     P -. "kaum" .-> B4["📡 Box D<br/>5%"]
-    B1 --> V["🧮 Vektor<br/>{A:80, B:40,<br/>C:15, D:5}"]
+    B1 --> V["🧮 Vektor (Muster)<br/>{A:80, B:40,<br/>C:15, D:5}"]
     B2 --> V
     B3 --> V
     B4 --> V
-    V --> M{{"Vergleich gegen<br/>Raum-Fingerprints<br/>(mittlere Abweichung<br/>ueber ALLE Boxen)"}}
+    V --> M{{"Vergleich gegen<br/>eingelernte Raum-Profile<br/>(mittlere Abweichung)"}}
     M --> R(["🏠 Position:<br/>Kaminraum"])
 ```
 
-**Der Punkt:** Die Position kommt aus dem **vollen Vektor-Vergleich** (mean absolute deviation ueber alle Boxen), **nicht** aus der staerksten Box allein. Je mehr Boxen mithoeren, desto genauer wird die Ortung.
+**Der Punkt:** Die Position kommt aus dem Vergleich des Signal-Musters gegen **vorher eingelernte Raum-Fingerprints** — nicht aus einer gleichzeitigen Mehrfach-Messung. Je mehr Boxen im Haus verteilt sind, desto dichter das Muster und desto stabiler die Raum-Erkennung.
 
 So wird aus einer einzelnen Box ein grober Etagen-Sensor — und aus mehreren Boxen ein raumgenaues Ortungssystem:
 
@@ -86,12 +86,12 @@ flowchart TD
     Phone -.->|"15%"| B3["📡 FritzBox 3"]
     Phone -.->|"5%"| B4["📡 FritzBox 4"]
 
-    B1 --> V["🧮 Signal-Vektor<br/>[80, 40, 15, 5]"]
+    B1 --> V["🧮 Signal-Vektor (Muster)<br/>[80, 40, 15, 5]"]
     B2 --> V
     B3 --> V
     B4 --> V
 
-    V ==>|"Vergleich gegen kalibrierte Fingerprints<br/>mittlere Abweichung ueber ALLE 4 Boxen"| Match{"🔍 Bester Treffer?"}
+    V ==>|"Vergleich gegen eingelernte Raum-Profile<br/>mittlere Abweichung"| Match{"🔍 Bester Treffer?"}
 
     Match --> Pos["📍 Raum: Buero"]
 
@@ -146,7 +146,7 @@ Damit niemand falsche Erwartungen hat (und das Projekt glaubwuerdig bleibt):
 
 | ✅ Das kann FritzTrack4U | ❌ Das kann es NICHT |
 |---|---|
-| Erkennen in **welchem Raum / auf welcher Etage** jemand ist | **Zentimeter-genaue** Position im Raum (kein „X steht am Schreibtisch“) |
+| Erkennen in **welchem Raum / auf welcher Etage** jemand ist | **Zentimeter-genaue** Position im Raum (kein „X steht am Schreibtisch") |
 | **Anwesend / abwesend** zuverlaessig melden | Geraete sehen, die **nicht im WLAN** verbunden sind (z.B. fremde Gast-Handys ausser Reichweite) |
 | **Mehrere Personen** gleichzeitig (je 1 getrackt. Geraet) | Personen **ohne Handy** orten |
 | **Gaeste** (unbekannte Geraete) melden | Eine **fremde MAC zuverlaessig wiedererkennen** (iPhones randomisieren MACs) |
@@ -168,7 +168,7 @@ Ehrlich bleiben: ESP32 ist der genauere Profi-Standard. FritzTrack4U gewinnt, we
 | Stromverbrauch zusaetzlich | **0** (Boxen laufen eh) | gering, aber vielfach |
 | Wann gewinnt es | du willst **nichts dazukaufen** | du willst **maximale Genauigkeit** |
 
-> **Fazit:** Kein „besser als ESP32“ — sondern **umsonst und gut genug, mit Luft nach oben.**
+> **Fazit:** Kein „besser als ESP32" — sondern **umsonst und gut genug, mit Luft nach oben.**
 
 ### 💡 Anwendungs-Ideen (Vision)
 
@@ -178,7 +178,7 @@ Ehrlich bleiben: ESP32 ist der genauere Profi-Standard. FritzTrack4U gewinnt, we
 - 🔆 Kind betritt sein Zimmer → Licht geht an. Verlaesst es → nach Puffer wieder aus.
 - 🖥️ Du verlaesst das Buero → Monitore aus, PC sperrt, Heizung runter. _(geplant — benoetigt schaltbare Geraete)_
 - 🔥 Heizung folgt den Menschen statt der Uhr — warm, wo jemand ist. _(geplant)_
-- 🚪 „Wer ist zu Hause?“ als Karte fuers ganze Haus — Etage, Raum, Anwesenheit.
+- 🚪 „Wer ist zu Hause?" als Karte fuers ganze Haus — Etage, Raum, Anwesenheit.
 - 👋 Gaeste-Hinweis: ein unbekanntes Handy taucht im WLAN auf.
 
 > **Bewusst NICHT das Ziel:** Mitarbeiter-Ueberwachung am Arbeitsplatz oder Kunden-Tracking im Laden. Das waere in Deutschland datenschutzrechtlich heikel (DSGVO, Betriebsrat) — FritzTrack4U ist ein **Werkzeug fuers eigene Zuhause**, mit deiner eigenen Familie und deiner eigenen Einwilligung.
@@ -240,7 +240,7 @@ nano config.json
 python3 fritztrack4u.py --config ./config.json
 ```
 
-**Pflicht-Schritt fuer Multi-Box (der eigentliche Trick):** Lege auf **jeder** FritzBox einen eigenen Benutzer mit dem Recht **„FRITZ!Box Einstellungen“** an. Nur dann liefert jede Box per TR-064 ihre eigene Signalstaerke. Fragst du nur den Master, bekommst du nur einen Wert — und damit keinen Vektor. Komplette Anleitung: **[docs/INSTALL.de.md](docs/INSTALL.de.md)**.
+**Pflicht-Schritt fuer Multi-Box (der eigentliche Trick):** Lege auf **jeder** FritzBox einen eigenen Benutzer mit dem Recht **„FRITZ!Box Einstellungen"** an. Nur dann liefert jede Box per TR-064 ihre eigene Signalstaerke. Fragst du nur den Master, bekommst du nur einen Wert — und damit keinen Vektor. Komplette Anleitung: **[docs/INSTALL.de.md](docs/INSTALL.de.md)**.
 
 ```json
 // config.example.json (Auszug — volle Vorlage im Repo)
@@ -281,21 +281,21 @@ python3 fritztrack4u.py --config ./config.json
 ---
 
 <a name="-die-geschichte--the-story--hikaye"></a>
-### 🔥 Die Geschichte — wie aus „unmoeglich“ ein Beweis wurde
+### 🔥 Die Geschichte — wie aus „unmoeglich" ein Beweis wurde
 
 Diese README dokumentiert die Reise ehrlich, inklusive aller Sackgassen. Es gab keinen genialen Trick — es gab Sturheit.
 
-1. **Der erste Konsens:** „FritzBox kann kein Indoor-Tracking, eine Box meldet pro Handy nur **einen** Wert — alle nehmen ESP32.“ Klingt fundiert. War unvollstaendig.
-2. **Mesh-Sticking entdeckt:** Ein Handy klebt an einer alten Box, obwohl die Person laengst weg ist. „An welcher Box haengt es“ ≠ „wo ist die Person“. Erster Beweis, dass die naive Annahme falsch ist.
-3. **~12 API-Wege ueber 3 Test-Runden:** viele Sackgassen — `edit_device` (1 Wert), `meshlist.lua` (404), `meshTopo` (Daten, aber **keine** rssi-Felder), homeNet/meshNet (kein dBm). Jeder Weg ehrlich getestet, nicht „gefuehlt“ verworfen.
-4. **Dreimal „unmoeglich“ — dreimal widersprochen:** Die KI erklaerte drei Mal selbstbewusst „Triangulieren mit FritzBox geht nicht“. Murat widersprach jedes Mal — auf Basis **Physik**: Nachbarboxen *hoeren* das Handy schwach durch die Waende (genau das nutzt die FritzBox intern fuers Mesh-Steering). Er hatte jedes Mal recht.
-5. **💥 Der Durchbruch:** Nicht nur den Master fragen — **eigener Login PRO Box.** Dann liefert TR-064 `GetGenericAssociatedDeviceInfo` pro Box den `SignalStrength`. **Bewiesen:** dasselbe Handy gleichzeitig von zwei Boxen — `{Buero 35%, SARA 10%}`. Eine echte 2er-Gruppe, ueber die zweite Box schwaecher, weil eine Wand dazwischen ist.
+1. **Der erste Konsens:** „FritzBox kann kein Indoor-Tracking, eine Box meldet pro Handy nur **einen** Wert — alle nehmen ESP32." Klingt fundiert. War unvollstaendig.
+2. **Mesh-Sticking entdeckt:** Ein Handy klebt an einer alten Box, obwohl die Person laengst weg ist. „An welcher Box haengt es" ≠ „wo ist die Person". Erster Beweis, dass die naive Annahme falsch ist.
+3. **~12 API-Wege ueber 3 Test-Runden:** viele Sackgassen — `edit_device` (1 Wert), `meshlist.lua` (404), `meshTopo` (Daten, aber **keine** rssi-Felder), homeNet/meshNet (kein dBm). Jeder Weg ehrlich getestet, nicht „gefuehlt" verworfen.
+4. **Dreimal „unmoeglich" — dreimal widersprochen:** Die KI erklaerte drei Mal selbstbewusst „Triangulieren mit FritzBox geht nicht". Murat widersprach jedes Mal — auf Basis **Physik**: Nachbarboxen *hoeren* das Handy schwach durch die Waende (genau das nutzt die FritzBox intern fuers Mesh-Steering). Er hatte jedes Mal recht.
+5. **💥 Der Durchbruch:** Nicht nur den Master fragen — **eigener Login PRO Box.** Dann liefert TR-064 `GetGenericAssociatedDeviceInfo` pro Box den `SignalStrength`. **Beobachtet:** In Grenzfaellen sieht eine Nachbarbox dasselbe Handy schwach durch die Wand — z.B. `{Buero 35%, SARA 10%}`. Das ist die Ausnahme (meist haengt ein Handy nur an *einer* Box), reicht aber mit Etagen-Info und kalibrierten Fingerprints fuer eine Raum-Zuordnung.
 6. **Anwesenheits-Bug gefunden & gefixt:** Ein offline gegangenes Handy klebte auf dem alten Raum — jetzt gilt: keine Box sieht das Handy = abwesend.
-7. **iPhone-Standby-Falle:** iPhones verschwinden im Standby kurz aus der Assoziationsliste, ohne den Raum zu verlassen. Loesung: 2-Minuten-Puffer, bevor ein Raum als „verlassen“ gilt.
+7. **iPhone-Standby-Falle:** iPhones verschwinden im Standby kurz aus der Assoziationsliste, ohne den Raum zu verlassen. Loesung: 2-Minuten-Puffer, bevor ein Raum als „verlassen" gilt.
 
-**Der Strategie-Wechsel, der alles drehte:** weg von *„eine Box abfragen“* hin zu *„Multi-Box-Datensammler“*. Aus einer Momentaufnahme wurde ein dynamisches Ortungssystem. **Murat hatte bei allem recht.**
+**Der Strategie-Wechsel, der alles drehte:** weg von *„eine Box abfragen"* hin zu *„Multi-Box-Datensammler"*. Aus einer Momentaufnahme wurde ein dynamisches Ortungssystem. **Murat hatte bei allem recht.**
 
-> Die Lektion: Dreimal „geht nicht“ ist kein Beweis, dass es nicht geht. Frag **alle** Knoten, nicht nur den naechstliegenden.
+> Die Lektion: Dreimal „geht nicht" ist kein Beweis, dass es nicht geht. Frag **alle** Knoten, nicht nur den naechstliegenden.
 
 ---
 
@@ -304,7 +304,7 @@ Diese README dokumentiert die Reise ehrlich, inklusive aller Sackgassen. Es gab 
 
 | Version | Was dazukam |
 |---|---|
-| **v1** | Eine Box, nur grobe **Etage** („an welcher Box haengt das Handy“). |
+| **v1** | Eine Box, nur grobe **Etage** („an welcher Box haengt das Handy"). |
 | **v5** | **Fingerprint-Kalibrierung pro Raum** — 1 Box + dBm, erste Raum-Genauigkeit. |
 | **v6** | **Multi-Box-Datensammler:** alle Boxen einzeln per TR-064, Anwesenheits-Check (offline = abwesend), **SQLite-Verlauf**, adaptiver Takt. |
 | **v6.1** | **Gaeste-Erkennung** + **60-Tage-Auto-Cleanup**. |
@@ -321,9 +321,9 @@ Diese README dokumentiert die Reise ehrlich, inklusive aller Sackgassen. Es gab 
 
 GPS works perfectly outdoors and not at all indoors. Yet indoors is exactly where you want to know who is where. FritzTrack4U solves it with a single idea:
 
-> **Every FritzBox measures the same phone SIMULTANEOUSLY — each with its own signal strength.**
+> **Several FritzBoxes together form a signal pattern — matched against room profiles you trained beforehand.**
 
-A phone in a room produces not *one* value but a **vector** across all boxes. The strongest box reveals the **floor**. The **full vector** reveals the **room**. The match runs against calibrated room fingerprints — across **all** boxes, not just the strongest one.
+A phone is associated with *one* box at any moment — but across a short time span and several box locations a **signal pattern** (vector) emerges. The box it's on reveals the **floor**; the pattern, matched against trained room fingerprints, reveals the **room**.
 
 ```mermaid
 flowchart LR
@@ -336,11 +336,11 @@ flowchart LR
     B2 --> V
     B3 --> V
     B4 --> V
-    V --> M{{"Match vs.<br/>room fingerprints<br/>(mean absolute deviation<br/>over ALL boxes)"}}
+    V --> M{{"Match vs.<br/>trained room profiles<br/>(mean absolute deviation)"}}
     M --> R(["🏠 Position:<br/>the den"])
 ```
 
-**The point:** position comes from the **full vector comparison** (mean absolute deviation over all boxes), **not** from the strongest box alone. The more boxes listen, the more accurate it gets.
+**The point:** position comes from matching the signal **pattern** against **room fingerprints trained beforehand** — not from a simultaneous multi-box measurement. The more boxes spread across the house, the denser the pattern and the more stable the room detection.
 
 ```
    ┌─────────────────────────────────────────────────────────────────┐
@@ -360,7 +360,7 @@ flowchart LR
 
 ### ✨ Features
 
-- 🏠 **Room-level positioning** via multi-box signal vector + calibrated fingerprints (mean absolute deviation across all boxes).
+- 🏠 **Room-level positioning** via multi-box signal pattern + calibrated fingerprints (matched against trained room profiles).
 - 🪜 **Floor detection** from the strongest box — works with just **one** box.
 - 🚪 **Presence/absence:** if **no** box sees the phone → the person is away.
 - 👥 **Guest detection:** unknown devices are flagged as guests, not silently dropped.
@@ -394,7 +394,7 @@ Let's be honest: ESP32 is the more accurate, professional standard. FritzTrack4U
 | Extra power draw | **0** (boxes run anyway) | low, but multiplied |
 | When it wins | you want to **buy nothing** | you want **max accuracy** |
 
-> **Bottom line:** not “better than ESP32” — but **free and good enough, with room to grow.**
+> **Bottom line:** not "better than ESP32" — but **free and good enough, with room to grow.**
 
 ### 🚀 Quick start
 
@@ -412,7 +412,7 @@ nano config.json
 python3 fritztrack4u.py --config ./config.json
 ```
 
-**Required for multi-box (the actual trick):** create a dedicated user with the **“FRITZ!Box settings”** permission on **every** box. Only then does each box return its own signal strength over TR-064. Query only the master and you get a single value — and therefore no vector. Full guide: **[docs/INSTALL.de.md](docs/INSTALL.de.md)** (German).
+**Required for multi-box (the actual trick):** create a dedicated user with the **"FRITZ!Box settings"** permission on **every** box. Only then does each box return its own signal strength over TR-064. Query only the master and you get a single value — and therefore no vector. Full guide: **[docs/INSTALL.de.md](docs/INSTALL.de.md)** (German).
 
 ```json
 // config.example.json (excerpt — full template in the repo)
@@ -449,21 +449,21 @@ python3 fritztrack4u.py --config ./config.json
 
 ---
 
-### 🔥 The Story — how “impossible” became proof
+### 🔥 The Story — how "impossible" became proof
 
 This README documents the journey honestly, dead ends included. There was no genius trick — there was stubbornness.
 
-1. **The first consensus:** “FritzBox can't do indoor tracking, a box reports only **one** value per phone — everyone uses ESP32.” Sounds solid. It was incomplete.
-2. **Mesh-sticking discovered:** a phone clings to an old box even after the person has left. “Which box it's on” ≠ “where the person is.” First proof the naive assumption is wrong.
-3. **~12 API routes across 3 test rounds:** many dead ends — `edit_device` (1 value), `meshlist.lua` (404), `meshTopo` (data, but **no** rssi fields), homeNet/meshNet (no dBm). Every route actually tested, not dismissed “by feel.”
-4. **Three times “impossible” — three times contradicted:** the AI confidently declared “you can't triangulate with a FritzBox” three times. Murat disagreed each time — on **physics**: neighbor boxes *hear* the phone faintly through the walls (exactly what the FritzBox uses internally for mesh steering). He was right every time.
-5. **💥 The breakthrough:** don't query only the master — **a dedicated login PER box.** Then TR-064 `GetGenericAssociatedDeviceInfo` returns each box's `SignalStrength`. **Proven:** the same phone seen by two boxes at once — `{Office 35%, Sara 10%}`. A real 2-box group, weaker on the second box because a wall sits between them.
+1. **The first consensus:** "FritzBox can't do indoor tracking, a box reports only **one** value per phone — everyone uses ESP32." Sounds solid. It was incomplete.
+2. **Mesh-sticking discovered:** a phone clings to an old box even after the person has left. "Which box it's on" ≠ "where the person is." First proof the naive assumption is wrong.
+3. **~12 API routes across 3 test rounds:** many dead ends — `edit_device` (1 value), `meshlist.lua` (404), `meshTopo` (data, but **no** rssi fields), homeNet/meshNet (no dBm). Every route actually tested, not dismissed "by feel."
+4. **Three times "impossible" — three times contradicted:** the AI confidently declared "you can't triangulate with a FritzBox" three times. Murat disagreed each time — on **physics**: neighbor boxes *hear* the phone faintly through the walls (exactly what the FritzBox uses internally for mesh steering). He was right every time.
+5. **💥 The breakthrough:** don't query only the master — **a dedicated login PER box.** Then TR-064 `GetGenericAssociatedDeviceInfo` returns each box's `SignalStrength`. **Observed:** in edge cases a neighbor box sees the same phone faintly through the wall — e.g. `{Office 35%, Sara 10%}`. That is the exception (usually a phone is attached to only *one* box), but combined with floor info and calibrated fingerprints it is enough for a room assignment.
 6. **Presence bug found & fixed:** a phone gone offline stuck to its old room — now: no box sees the phone = away.
-7. **The iPhone standby trap:** iPhones briefly vanish from the association list in standby without leaving the room. Fix: a 2-minute buffer before a room counts as “left.”
+7. **The iPhone standby trap:** iPhones briefly vanish from the association list in standby without leaving the room. Fix: a 2-minute buffer before a room counts as "left."
 
-**The strategy shift that turned everything:** away from *“query one box”* toward *“multi-box data collector.”* A snapshot became a dynamic positioning system. **Murat was right about all of it.**
+**The strategy shift that turned everything:** away from *"query one box"* toward *"multi-box data collector."* A snapshot became a dynamic positioning system. **Murat was right about all of it.**
 
-> The lesson: three “can't be done” is not proof it can't be done. Ask **all** nodes, not just the nearest.
+> The lesson: three "can't be done" is not proof it can't be done. Ask **all** nodes, not just the nearest.
 
 ---
 
@@ -471,11 +471,11 @@ This README documents the journey honestly, dead ends included. There was no gen
 
 | Version | What was added |
 |---|---|
-| **v1** | One box, rough **floor** only (“which box is the phone on”). |
+| **v1** | One box, rough **floor** only ("which box is the phone on"). |
 | **v5** | **Per-room fingerprint calibration** — 1 box + dBm, first room accuracy. |
 | **v6** | **Multi-box data collector:** all boxes individually via TR-064, presence check (offline = away), **SQLite history**, adaptive polling. |
 | **v6.1** | **Guest detection** + **60-day auto-cleanup**. |
-| **FritzTrack4U (public)** | Config-driven **1–N boxes**, anonymized, **full-vector match across all boxes**. |
+| **FritzTrack4U (public)** | Config-driven **1–N boxes**, anonymized, **signal-pattern match against trained room fingerprints**. |
 
 ---
 

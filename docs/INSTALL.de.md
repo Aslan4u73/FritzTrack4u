@@ -2,8 +2,12 @@
 
 Indoor-Positioning ueber FritzBox-WLAN. FritzTrack4U meldet, in welchem
 Raum bzw. auf welcher Etage sich ein Handy gerade befindet — ganz ohne
-App auf dem Handy, ohne Bluetooth-Beacons, nur ueber die Signalstaerke,
-mit der jede FritzBox und jeder Repeater das Geraet sieht.
+App auf dem Handy, ohne Bluetooth-Beacons, nur ueber die Signalstaerke
+(TR-064-Prozentwert), die der jeweils verbundene Access-Point meldet —
+also die FritzBox/der Repeater, an dem das Geraet gerade haengt.
+(Hinweis: ein Geraet ist immer nur mit *einer* Box verbunden; reine
+Mesh-Repeater liefern fuer ihre Clients oft keinen eigenen Wert — dann
+zaehlt, *welche* Box das Geraet haelt.)
 
 Diese Anleitung fuehrt Schritt fuer Schritt durch die komplette
 Einrichtung. Wer die Reihenfolge einhaelt, hat den Daemon in unter einer

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FritzTrack4U – Anwesenheitserkennung & Raum-Ortung mit der FritzBox (Home Assistant)</title>
-<meta name="description" content="FritzTrack4U: Anwesenheits- und Raumerkennung für Home Assistant mit den FRITZ!Boxen, die du schon hast – ohne ESP32, ohne Cloud, kostenlos. Sieh wer zuhause ist, erkenne fremde Geräte im WLAN und automatisiere Licht & Heizung. Open Source.">
+<title>FritzTrack4U – Anwesenheitserkennung mit der FritzBox | Home Assistant</title>
+<meta name="description" content="Anwesenheits- & Raumerkennung für Home Assistant mit deinen FRITZ!Boxen – ohne ESP32, ohne Cloud, kostenlos & Open Source. Sieh wer zuhause ist.">
 <meta name="keywords" content="FritzBox Anwesenheitserkennung, Home Assistant Anwesenheitserkennung, Raumerkennung Home Assistant, Anwesenheitserkennung ohne ESP32, wer ist zuhause Smart Home, fremdes Gerät im WLAN erkennen, Präsenzerkennung Smart Home, Indoor Positioning WLAN, FritzBox Home Assistant Integration, smart home licht automatisch aus, Etage erkennen Smart Home, TR-064, MQTT Auto-Discovery, Open Source">
 <meta name="author" content="Aslan4u">
 <meta name="theme-color" content="#0E1116">
@@ -12,7 +12,7 @@
 <!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="FritzTrack4U – Personen-Ortung im ganzen Haus mit deinen FritzBoxen">
-<meta property="og:description" content="Indoor-Personen-Ortung per FritzBox-WLAN. Multi-Box-Triangulation über einen 4-Werte-Signal-Vektor – ohne Zusatz-Hardware, kostenlos, mit Home-Assistant-Integration.">
+<meta property="og:description" content="Indoor-Personen-Ortung per FritzBox-WLAN. Raum- & Etagen-Erkennung per Signal-Fingerprinting – ohne Zusatz-Hardware, kostenlos, mit Home-Assistant-Integration.">
 <meta property="og:url" content="https://aslan4u.de/fritztrack4u">
 <meta property="og:site_name" content="FritzTrack4U">
 <meta property="og:locale" content="de_DE">
@@ -22,7 +22,28 @@
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="FritzTrack4U – Personen-Ortung mit deinen FritzBoxen">
-<meta name="twitter:description" content="Indoor-Personen-Ortung per FritzBox-WLAN. Multi-Box-Triangulation, kostenlos, ohne Zusatz-Hardware.">
+<meta name="twitter:description" content="Indoor-Personen-Ortung per FritzBox-WLAN. Raum- & Etagen-Erkennung per Signal-Fingerprinting, kostenlos, ohne Zusatz-Hardware.">
+
+<!-- Structured Data: SoftwareApplication -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "FritzTrack4U",
+  "applicationCategory": "BrowserApplication",
+  "operatingSystem": "Linux, Raspberry Pi, any Python 3 host",
+  "description": "Open-Source-Tool zur Anwesenheits- und Raumerkennung für Home Assistant mit der WLAN-Signalstärke von FRITZ!Boxen (TR-064). Ohne ESP32, ohne Cloud.",
+  "url": "https://aslan4u.de/fritztrack4u",
+  "downloadUrl": "https://github.com/Aslan4u73/FritzTrack4u",
+  "license": "https://opensource.org/licenses/MIT",
+  "softwareVersion": "0.1.0",
+  "programmingLanguage": "Python",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+  "author": { "@type": "Person", "name": "Murat Danis", "url": "https://aslan4u.de" },
+  "keywords": "FritzBox Anwesenheitserkennung, Home Assistant, Raumerkennung, Indoor Positioning, Presence Detection, TR-064"
+}
+</script>
 
 <style>
   :root{
@@ -350,7 +371,7 @@
         <ul>
           <li><span class="ic">✓</span> Eigener Login <b>pro Box</b> – nicht nur am Master.</li>
           <li><span class="ic">✓</span> TR-064 <b>GetGenericAssociatedDeviceInfo</b> liefert pro Box den SignalStrength.</li>
-          <li><span class="ic">✓</span> Bewiesen: ein Handy gleichzeitig {Büro 35 %, SARA 10 %} von zwei Boxen.</li>
+          <li><span class="ic">✓</span> Beobachtet: in Grenzfällen sieht eine Nachbarbox dasselbe Handy schwach durch die Wand – {Büro 35 %, SARA 10 %}. Die Ausnahme, nicht der Normalfall.</li>
           <li><span class="ic">✓</span> Strategie-Wechsel: von „eine Box abfragen" zum <b>Multi-Box-Datensammler</b>.</li>
         </ul>
       </div>
@@ -359,11 +380,11 @@
     <!-- VECTOR VISUAL -->
     <div class="vector-box glass reveal">
       <div class="vh">Ein Raum ist kein Wert – ein Raum ist ein <span style="color:var(--accent)">Vektor</span></div>
-      <p class="vsub">Jede FritzBox misst dasselbe Handy <b>gleichzeitig</b> mit eigener Signalstärke. Das ergibt einen 4-Werte-Vektor. Die Position kommt aus dem Vergleich des <b>vollen Vektors</b> gegen kalibrierte Raum-Fingerprints – nicht nur aus der stärksten Box.</p>
+      <p class="vsub">Ein Handy hängt zu jedem Zeitpunkt an <b>einer</b> Box. Über mehrere Boxen-Standorte und wiederholte Messungen entsteht ein Signal-Muster, das gegen vorher <b>kalibrierte Raum-Fingerprints</b> verglichen wird – so wird aus „im Haus" ein konkreter Raum. Keine gleichzeitige Mehrfach-Messung, sondern Muster-Vergleich.</p>
 
       <div class="room-grid">
         <div class="room match">
-          <div class="room-name">Live-Messung Handy <span class="tag">erkannt</span></div>
+          <div class="room-name">Aktuelles Signal-Muster <span class="tag">erkannt</span></div>
           <div class="bar-row"><span class="blbl">Box 1</span><div class="bar-track"><div class="bar-fill" style="width:80%"></div></div><span class="bval">80%</span></div>
           <div class="bar-row"><span class="blbl">Box 2</span><div class="bar-track"><div class="bar-fill" style="width:40%"></div></div><span class="bval">40%</span></div>
           <div class="bar-row"><span class="blbl">Box 3</span><div class="bar-track"><div class="bar-fill" style="width:15%"></div></div><span class="bval">15%</span></div>
@@ -405,8 +426,8 @@
     <div class="cards">
       <div class="card glass reveal">
         <div class="ico">📡</div>
-        <h3>Multi-Box-Triangulation</h3>
-        <p>Mehrere Boxen messen dasselbe Handy gleichzeitig. Der volle Signal-Vektor wird gegen Raum-Fingerprints verglichen – Zimmer-genau statt nur „im Haus".</p>
+        <h3>Multi-Box-Fingerprinting</h3>
+        <p>Das Signal-Muster über mehrere Boxen-Standorte wird gegen kalibrierte Raum-Fingerprints verglichen – Raum-genau (nach Einlernen) statt nur „im Haus". Keine Triangulation, sondern Muster-Vergleich.</p>
       </div>
       <div class="card glass reveal blue">
         <div class="ico">🏠</div>
@@ -469,7 +490,7 @@
       <div class="tier glass best reveal">
         <div class="big">4+<small> Boxen</small></div>
         <h4>Raum-genau</h4>
-        <p>Voller 4-plus-Werte-Vektor pro Raum. Jeder zusätzliche Messpunkt verkleinert die Abweichung – Zimmer-genaue Ortung.</p>
+        <p>Voller Signal-Vektor pro Raum. Jeder zusätzliche Boxen-Standort verkleinert die Abweichung – Zimmer-genaue Ortung nach Kalibrierung.</p>
         <div class="dots"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div>
       </div>
     </div>
@@ -509,7 +530,7 @@
       <div class="step win reveal">
         <span class="lbl">Durchbruch</span>
         <h4>Eigener Login pro Box → SignalStrength pro Box</h4>
-        <p>TR-064 GetGenericAssociatedDeviceInfo liefert je Box die Stärke. Bewiesen: {Büro 35 %, SARA 10 %} gleichzeitig.</p>
+        <p>TR-064 GetGenericAssociatedDeviceInfo liefert je Box die Stärke. Beobachtet: in Grenzfällen {Büro 35 %, SARA 10 %} gleichzeitig – die Ausnahme, die mit Fingerprinting zum Raum führt.</p>
       </div>
       <div class="step reveal">
         <span class="lbl">Feinschliff</span>
